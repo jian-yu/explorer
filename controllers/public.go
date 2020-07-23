@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/db"
-	"github.com/wongyinlong/hsnNet/models"
-	//"github.com/wongyinlong/hsnNet/logger"
+	"conf"
+	"db"
+	"models"
+	//"logger"
 )
 
 type PublicController struct {

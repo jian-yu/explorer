@@ -2,12 +2,13 @@ package accountDetail
 
 import (
 	"encoding/json"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/logger"
+	"explorer/conf"
+	"explorer/logger"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"time"
+
 )
 
 /*

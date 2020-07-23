@@ -2,8 +2,8 @@ package actions
 
 import (
 	"github.com/bitly/go-simplejson"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
+	"conf"
+	"models"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"

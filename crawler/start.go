@@ -2,19 +2,24 @@ package crawler
 
 import (
 	"errors"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/crawler/actions"
-	"github.com/wongyinlong/hsnNet/crawler/actions/validatorDetails"
-	"github.com/wongyinlong/hsnNet/logger"
+	"explorer/crawler/actions"
+	"explorer/crawler/actions/validatorDetails"
+	"github.com/spf13/viper"
 )
 
-func OnStart(){
-	config := conf.NewConfig() // CONFIG
-	log := logger.NewLogger()  // LOG
+var LcdURL = ""
+var RpcURL = ""
+var ValidatorSetCap = 0
+
+func OnStart() {
+	LcdURL = viper.GetString(`LCD.URL`)
+	RpcURL = viper.GetString(`RPC.URL`)
+	ValidatorSetCap = viper.GetInt(`Public.ValidatorSetLimit`)
+
 	// check LCD RPC address.
-	if config.Remote.Lcd != "" && config.Remote.Rpc!=""{
-		go actions.GetPublic(config, log)
-		go actions.GetBlock(config, log)
+	if lcdURL != "" && rpcURL != "" {
+		go actions.GetPublic()
+		go actions.GetBlock()
 		go actions.GetValidators(config, log)
 		go actions.GetValidatorsSet(config, log)
 		go actions.GetTxs2(config, log, config.Public.ChainName)
@@ -24,10 +29,7 @@ func OnStart(){
 
 		//go validatorBlocksTable()
 	} else {
-		log.Info("LCD OR RPC address is empty")
 		panic(errors.New("LCD/ RPC address is empty,"))
 	}
 
 }
-
-

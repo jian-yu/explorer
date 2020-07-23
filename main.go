@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
-	"github.com/wongyinlong/hsnNet/crawler"
-	_ "github.com/wongyinlong/hsnNet/routers"
+	"crawler"
+	_ "routers"
 )
 
 func init() {

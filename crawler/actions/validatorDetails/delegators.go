@@ -2,9 +2,9 @@ package validatorDetails
 
 import (
 	"encoding/json"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
-	"github.com/wongyinlong/hsnNet/models/validatorsDetail"
+	"conf"
+	"models"
+	"models/validatorsDetail"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"

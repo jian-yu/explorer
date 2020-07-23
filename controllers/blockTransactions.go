@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/models"
+	"models"
 )
 
 type BlockTxController struct {

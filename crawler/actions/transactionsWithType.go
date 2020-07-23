@@ -2,9 +2,9 @@ package actions
 
 import (
 	"github.com/bitly/go-simplejson"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/db"
-	"github.com/wongyinlong/hsnNet/models"
+	"conf"
+	"db"
+	"models"
 	"go.uber.org/zap"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"

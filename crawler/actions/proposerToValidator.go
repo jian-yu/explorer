@@ -1,8 +1,8 @@
 package actions
 
 import (
-	"github.com/wongyinlong/hsnNet/models"
-	"github.com/wongyinlong/hsnNet/models/utils"
+	"models"
+	"models/utils"
 	"go.uber.org/zap"
 )
 

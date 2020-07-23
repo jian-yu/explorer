@@ -3,9 +3,9 @@ package accountDetails
 import (
 	"github.com/astaxie/beego"
 	"github.com/shopspring/decimal"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
-	"github.com/wongyinlong/hsnNet/models/accountDetail"
+	"conf"
+	"models"
+	"models/accountDetail"
 	"strings"
 )
 

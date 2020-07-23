@@ -1,8 +1,8 @@
 package validatorDetails
 
 import (
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/logger"
+	"conf"
+	"logger"
 	"testing"
 )
 

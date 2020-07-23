@@ -3,8 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
+	"conf"
+	"models"
 	"io/ioutil"
 	"net/http"
 	"time"

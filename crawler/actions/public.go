@@ -2,110 +2,110 @@ package actions
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
-	"go.uber.org/zap"
-	"io/ioutil"
-	"net/http"
+	"explorer/common"
+	"explorer/crawler"
+	"explorer/db"
+	"explorer/model"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+	"gopkg.in/resty.v1"
 	"strconv"
 	"time"
 )
+
 var tokenPrice string
 var fiveMinAgo time.Time
+var logger = log.With().Logger()
 
-func GetPublic(config conf.Config, log zap.Logger) {
-	/*
+/*
 	Dashboard info ,
 
 			Price            float32   `json:"price"`
 			Height           int       `json:"height"`
-			PledgeHsn        float32   `json:"pledge_hsn"`
-			TotalHsn         float32   `json:"total_hsn"`
+			PledgeCoin        float32   `json:"pledge_hsn"`
+			TotalCoin         float32   `json:"total_hsn"`
 			Inflation        float32   `json:"inflation"`
 			TotalValidators  int       `json:"total_validators"`
 			OnlineValidators int       `json:"online_validators"`
 			BlockTime     float64   `json:"block_time"`
 
-	*/
-	info := models.NewInfomation()
+*/
+
+func GetPublic() {
+
+	mgoStore := db.NewMongoStore()
+	customOperator := common.NewCustom(mgoStore)
+
+	//info := models.NewInfomation()
 
 	for {
-		price := getPriceFormDragonex(config, log)
-		height, pledgen, total, err := pledgenAndTotalHsn(config, log)
+		price := getPriceFormDragonex()
+		height, pledgen, total, err := pledgenAndTotalHsn()
 		if err != nil {
-			log.Error("get height error,retry in "+(config.Param.CanNotGetErrorInterval*time.Second).String(),zap.String("error",err.Error()))
-			time.Sleep(time.Second *config.Param.CanNotGetErrorInterval)
-			continue
-		}
-		inflation, err := getInflation(config, log)
-		if err != nil {
-			log.Error("get inflation error, retry in "+(config.Param.CanNotGetErrorInterval*time.Second).String() ,zap.String("error",err.Error()))
+			logger.Err(err).Msg(`pledgenAndTotalHsn`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
-		onlineV, totalV, err := getValidators(config, log)
+		inflation, err := getInflation()
 		if err != nil {
-			log.Error("get validators error, retry in  "+(config.Param.CanNotGetErrorInterval*time.Second).String(),zap.String("error",err.Error()) )
+			logger.Err(err).Msg(`getInflation`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
-		blockTime, err := getBLockTime(config, log, height)
+		onlineV, totalV, err := getValidators()
 		if err != nil {
-			log.Error("get blockTime error, retry in "+(config.Param.CanNotGetErrorInterval*time.Second).String() ,zap.String("error",err.Error()))
+			logger.Err(err).Msg(`getValidators`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
-		err = info.SetInfo(log,price, height, pledgen, total, inflation, totalV, onlineV, blockTime)
+		blockTime, err := getBLockTime(height)
 		if err != nil {
-			log.Error("insert public data error",zap.String("error",err.Error()))
-			time.Sleep(time.Second * 3)
+			logger.Err(err).Msg(`getBLockTime`)
+			time.Sleep(time.Second * 4)
 			continue
 		}
 
-		time.Sleep(time.Second *config.Param.PublicInterval)
+		customOperator.SetInfo(model.Information{
+			Price:            price,
+			Height:           height,
+			PledgeCoin:       pledgen,
+			TotalCoin:        total,
+			Inflation:        inflation,
+			TotalValidators:  totalV,
+			OnlineValidators: onlineV,
+			BlockTime:        blockTime,
+		})
+
+		time.Sleep(time.Second * 4)
 	}
-
-
 }
-func getBLockTime(config conf.Config, log zap.Logger, height int) (float64, error) {
-	var block models.BlockInfo
-	lastHeightUrl := config.Remote.Lcd + "/blocks/" + strconv.Itoa(height)
-	aheadHeightUrl := config.Remote.Lcd + "/blocks/" + strconv.Itoa(height-1)
-	c:=&http.Client{
-		Timeout:time.Second * config.Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get(lastHeightUrl)
+
+func getBLockTime(height int) (float64, error) {
+	var block model.BlockInfo
+	var httpClient = resty.New()
+	lastHeightUrl := crawler.LcdURL + "/blocks/" + strconv.Itoa(height)
+	aheadHeightUrl := crawler.LcdURL + "/blocks/" + strconv.Itoa(height-1)
+
+	rsp, err := httpClient.R().Get(lastHeightUrl)
 	if err != nil {
-		log.Error("Cannot get block info! ")
-		log.Sync()
-		return 0.0, errors.New("get block error")
+		return 0.0, err
 	}
-	jsonStr, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &block)
+	err = json.Unmarshal(rsp.Body(), &block)
 	if err != nil {
-		log.Error("Cannot parse block info! ")
-		log.Sync()
-		return 0.0, errors.New("parse block error")
+		return 0.0, err
 	}
+
 	lastHeightTime := block.Block.Header.Time
 
-	resp, err = c.Get(aheadHeightUrl)
+	rsp, err = httpClient.R().Get(aheadHeightUrl)
+	if err != nil {
+		return 0.0, err
+	}
+	err = json.Unmarshal(rsp.Body(), &block)
+	if err != nil {
+		return 0.0, err
+	}
 
-	if err != nil {
-		log.Error("Cannot get block info! ")
-		log.Sync()
-		return 0.0, errors.New("get block error")
-	}else {
-		defer resp.Body.Close()
-	}
-	jsonStr, _ = ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &block)
-	if err != nil {
-		log.Error("Cannot parse block info! ")
-		log.Sync()
-		return 0.0, errors.New("parse block error")
-	}
 	aheadHeightTime := block.Block.Header.Time
 	t1, _ := time.Parse(time.RFC3339Nano, lastHeightTime)
 	t2, _ := time.Parse(time.RFC3339Nano, aheadHeightTime)
@@ -113,18 +113,17 @@ func getBLockTime(config conf.Config, log zap.Logger, height int) (float64, erro
 	return blockTime, nil
 }
 
-
-func getPriceFormDragonex (config conf.Config, log zap.Logger) string{
+func getPriceFormDragonex() string {
 
 	if tokenPrice == "" {
-		tokenPrice = getPrice(log)
+		tokenPrice = getPrice()
 		fiveMinAgo = time.Now()
-	}else {
+	} else {
 		now := time.Now()
 		m, _ := time.ParseDuration("-1m")
 		fiveMinAgoFromNow := now.Add(m * 1)
-		if fiveMinAgo.Before(fiveMinAgoFromNow){
-			tokenPrice = getPrice(log)
+		if fiveMinAgo.Before(fiveMinAgoFromNow) {
+			tokenPrice = getPrice()
 			fiveMinAgo = time.Now()
 		}
 	}
@@ -132,87 +131,50 @@ func getPriceFormDragonex (config conf.Config, log zap.Logger) string{
 	return tokenPrice
 }
 
-
-func getPrice(log zap.Logger) (string) {
-	/*
-		30分钟从网站取一次价格
-	*/
+/*
+	30分钟从网站取一次价格
+*/
+func getPrice() string {
 	var price Price
-	c:=&http.Client{
-		Timeout:time.Second * conf.NewConfig().Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get("https://openapi.dragonex.co/api/v1/market/real/?symbol_id=302")
+	var coinPriceURL = viper.GetString(`Public.CoinPriceURL`)
+	var httpClient = resty.New()
+
+	rsp, err := httpClient.R().Get(coinPriceURL)
 	if err != nil {
-		log.Error("can not get token price from dragonex!!")
+		logger.Err(err).Interface(`CoinPriceURL`, coinPriceURL).Msg(`getPrice`)
+		return ""
+	}
+	err = json.Unmarshal(rsp.Body(), &price)
+	if err != nil {
+		logger.Err(err).Interface(`rsp`, rsp).Msg(`getPrice`)
+	}
+
+	if len(price.Data) < 1 {
 		return tokenPrice
-	}else {
-		defer  resp.Body.Close()
-		jsonStr, _ := ioutil.ReadAll(resp.Body)
-		_ = json.Unmarshal(jsonStr, &price)
-		if len(price.Data) <1{
-			// empty
-			return tokenPrice
-		}else {
-			return price.Data[0].ClosePrice
-		}
+	} else {
+		return price.Data[0].ClosePrice
 	}
 
 }
 
-//func getPrice(config conf.Config, log zap.Logger) (string, error) {
-//	/*
-//	5分钟从网站取一次价格
-//	*/
-//	//now := time.Now()
-//	//if now <fiveMinsAgo{
-//	//	return Price
-//	//}else {
-//	//
-//	//}
-//
-//	var price Price
-//	resp, err := http.Get("https://openapi.dragonex.im/api/v1/market/real/?symbol_id=302")
-//	defer resp.Body.Close()
-//	if err != nil {
-//		log.Error("Cannot get hsn price info! ")
-//		return "", errors.New("get hsn price error")
-//	}
-//	jsonStr, _ := ioutil.ReadAll(resp.Body)
-//	err = json.Unmarshal(jsonStr, &price)
-//	if err != nil {
-//		log.Error("Cannot parse hsn price info! ")
-//		return "", errors.New("parse hsn price error")
-//	}
-//	//err := resp.Body.Close()
-//
-//	return price.Data[0].ClosePrice, nil
-//
-//	// return hsn price  https://openapi.dragonex.im/api/v1/market/real/?symbol_id=302
-//
-//}
-func pledgenAndTotalHsn(config conf.Config, log zap.Logger) (int, int, int, error) {
+func pledgenAndTotalHsn() (int, int, int, error) {
 	//return pledge and total http://localhost:1317/staking/pool
 	// Cannot specify height
+	var httpClient = resty.New()
 	var pledgenAndTotalHsn PledgenAndTotalHsn
-	url := config.Remote.Lcd + "/staking/pool"
-	c:=&http.Client{
-		Timeout:time.Second * config.Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get(url)
+	url := crawler.LcdURL + "/staking/pool"
 
+	rsp, err := httpClient.R().Get(url)
 	if err != nil {
-		log.Error("Cannot get pledge info! ")
-		return 0, 0, 0, err
-	}else {
-		defer resp.Body.Close()
-	}
-	jsonStr, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &pledgenAndTotalHsn)
-	if err != nil {
-		log.Error("Cannot parse pledge info! ")
-		log.Sync()
 		return 0, 0, 0, err
 	}
+
+	err = json.Unmarshal(rsp.Body(), &pledgenAndTotalHsn)
+	if err != nil {
+
+		return 0, 0, 0, err
+	}
+
 	bonded, _ := strconv.Atoi(pledgenAndTotalHsn.Result.BondedTokens)
 	unbonded, _ := strconv.Atoi(pledgenAndTotalHsn.Result.NotBondedTokens)
 	total := bonded + unbonded
@@ -220,109 +182,83 @@ func pledgenAndTotalHsn(config conf.Config, log zap.Logger) (int, int, int, erro
 	return height, bonded, total, nil
 }
 
-func getInflation(config conf.Config, log zap.Logger) (string, error) {
+func getInflation() (string, error) {
 	// return inflation http://localhost:1317/minting/inflation
+	var httpClient = resty.New()
 	var inflation Inflation
-	url := config.Remote.Lcd + "/minting/inflation"
-	c:=&http.Client{
-		Timeout:time.Second * config.Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get(url)
+	url := crawler.LcdURL + "/minting/inflation"
 
+	rsp, err := httpClient.R().Get(url)
 	if err != nil {
-		log.Error("Cannot get inflation info! ")
-		log.Sync()
-		return "", errors.New("get inflation error")
-	}else {
-		defer resp.Body.Close()
+		return "", err
 	}
-	jsonStr, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &inflation)
+
+	err = json.Unmarshal(rsp.Body(), &inflation)
 	if err != nil {
-		log.Error("Cannot parse inflation info! ")
-		log.Sync()
-		return "", errors.New("parse inflation error")
+		return "", err
 	}
 	result := inflation.Result
 	return result, nil
 
 }
-func getValidators(config conf.Config, log zap.Logger) (int, int, error) {
+func getValidators() (int, int, error) {
 	// bonded, 	unbonding  http://172.38.8.89:1317/staking/validators?status=unbonding&page=1
 	//http://172.38.8.89:1317/staking/validators?status=bonded&page=1
-	var validators models.Validators
-	bondedUrl := config.Remote.Lcd + "/staking/validators?status=bonded&page=1"
-	unbondedUrl := config.Remote.Lcd + "/staking/validators?status=unbonded&page=1"
-	unbondingdUrl := config.Remote.Lcd + "/staking/validators?status=unbonding&page=1"
-	var Jailed int
-	c:=&http.Client{
-		Timeout:time.Second * config.Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get(bondedUrl)
+	var validators model.Validators
+	var jailed int
+	var total int
+	var httpClient = resty.New()
+	bondedUrl := crawler.LcdURL + "/staking/validators?status=bonded&page=1"
+	unbondedUrl := crawler.LcdURL + "/staking/validators?status=unbonded&page=1"
+	unbondingdUrl := crawler.LcdURL + "/staking/validators?status=unbonding&page=1"
+
+	rsp, err := httpClient.R().Get(bondedUrl)
 	if err != nil {
-		log.Error("Cannot get validator's info! ")
-		log.Sync()
-		return 0, 0, errors.New("get validators error")
+		return 0, 0, err
 	}
-	jsonStr, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &validators)
+	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
-		log.Error("Cannot parse validators information correctly!")
-		log.Sync()
-		return 0, 0, errors.New("parse validators information error")
+		return 0, 0, err
 	}
-	for _,item := range validators.Result{
+	for _, item := range validators.Result {
 		if item.Jailed {
-			Jailed = Jailed+1
+			jailed += 1
 		}
 	}
-	bonded := len(validators.Result)
+	total += len(validators.Result)
 
-	resp, err = c.Get(unbondingdUrl)
+	rsp, err = httpClient.R().Get(unbondingdUrl)
 	if err != nil {
-		log.Error("Cannot get validator's info! ")
-		log.Sync()
-		return 0, 0, errors.New("get validators error")
+		return 0, 0, err
 	}
-	jsonStr, _ = ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &validators)
+	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
-		log.Error("Cannot parse validators information correctly!")
-		log.Sync()
-		return 0, 0, errors.New("parse validators information error")
+		return 0, 0, err
 	}
-	for _,item := range validators.Result{
+	for _, item := range validators.Result {
 		if item.Jailed {
-			Jailed = Jailed+1
+			jailed += 1
 		}
 	}
-	unbonding := len(validators.Result)
+	total += len(validators.Result)
 
-	resp, err = c.Get(unbondedUrl)
-
+	rsp, err = httpClient.R().Get(unbondedUrl)
+	rsp, err = httpClient.R().Get(unbondingdUrl)
 	if err != nil {
-		log.Error("Cannot get validator's info! ")
-		log.Sync()
-		return 0, 0, errors.New("get validators error")
-	}else {
-		defer resp.Body.Close()
+		return 0, 0, err
 	}
-	jsonStr, _ = ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(jsonStr, &validators)
+	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
-		log.Error("Cannot parse validators information correctly!")
-		log.Sync()
-		return 0, 0, errors.New("parse validators information error")
+		return 0, 0, err
 	}
-	for _,item := range validators.Result{
+	for _, item := range validators.Result {
 		if item.Jailed {
-			Jailed = Jailed+1
+			jailed += 1
 		}
 	}
-	unbonded := len(validators.Result)
-	total := bonded + unbonded + unbonding
-	alive := total -Jailed
-	return alive, total, nil
+
+	total += len(validators.Result)
+	return total - jailed, total, nil
 }
 
 type Inflation struct {
@@ -357,4 +293,3 @@ type Price struct {
 		SymbolID        int    `json:"symbol_id"`
 	} `json:"data"`
 }
-

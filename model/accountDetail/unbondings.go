@@ -2,12 +2,13 @@ package accountDetail
 
 import (
 	"encoding/json"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/logger"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"conf"
+	"logger"
+	"go.uber.org/zap"
 )
 
 type Unbonding struct {
@@ -31,13 +32,13 @@ func (u *Unbonding) GetInfo(address string) *Unbonding {
 	log := logger.NewLogger()
 	var unbonding Unbonding
 	url := config.Remote.Lcd + "/staking/delegators/" + address + "/unbonding_delegations"
-	c:=&http.Client{
-		Timeout:time.Second * config.Param.HTTPGetTimeOut,
+	c := &http.Client{
+		Timeout: time.Second * config.Param.HTTPGetTimeOut,
 	}
 	resp, err := c.Get(url)
 
 	if err != nil {
-		log.Error("Get account's delegations error!",zap.String("error",err.Error()))
+		log.Error("Get account's delegations error!", zap.String("error", err.Error()))
 	} else {
 		defer resp.Body.Close()
 	}

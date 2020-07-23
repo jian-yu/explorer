@@ -8,10 +8,11 @@
 package routers
 
 import (
+	"controllers"
+	ad "controllers/accountDetails"
+	vd "controllers/validatorDetails"
+
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/controllers"
-	ad "github.com/wongyinlong/hsnNet/controllers/accountDetails"
-	vd "github.com/wongyinlong/hsnNet/controllers/validatorDetails"
 )
 
 func init() {

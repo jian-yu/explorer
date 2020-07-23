@@ -1,19 +1,20 @@
 package validatorDetails
 
 import (
+	"conf"
 	"encoding/json"
 	"errors"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models"
-	"github.com/wongyinlong/hsnNet/models/validatorsDetail"
-	"go.uber.org/zap"
 	"io/ioutil"
+	"models"
+	"models/validatorsDetail"
 	"net/http"
 	"strconv"
 	"time"
+
+	"go.uber.org/zap"
 )
 
-func GetDelegatorNums(config conf.Config, log zap.Logger, ) {
+func GetDelegatorNums(config conf.Config, log zap.Logger) {
 	for {
 
 		utcH := time.Now().UTC().Hour()
@@ -30,7 +31,7 @@ func GetDelegatorNums(config conf.Config, log zap.Logger, ) {
 		time.Sleep(time.Hour * 1)
 	}
 }
-func updateInsertDelegatorData(config conf.Config, log zap.Logger, ) error {
+func updateInsertDelegatorData(config conf.Config, log zap.Logger) error {
 
 	var validators models.ValidatorInfo
 	var delegations validatorsDetail.Delegators
@@ -68,5 +69,3 @@ func updateInsertDelegatorData(config conf.Config, log zap.Logger, ) error {
 	}
 	return nil
 }
-
-

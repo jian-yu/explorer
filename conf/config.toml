@@ -1,0 +1,20 @@
+GenesisAddress = ""
+[MongoDB]
+    URL = ""
+    DBName = ""
+    PoolLimit = 50
+    Timeout = 60
+[RPC]
+    URL = ""
+[LCD]
+    URL = ""
+[Public]
+    Bech32PrefixAccAddr =  "hsc"
+    Bech32PrefixValAddr =  "hscvaloper"
+    ChainId =              "hst"
+    ChainName =            "hst"
+    CoinGeckoId =         "hst"
+    Denom = "hst"
+    CoinToVoitingPower =   1.0
+    ValidatorSetLimit =   100
+    CoinPriceURL = ""

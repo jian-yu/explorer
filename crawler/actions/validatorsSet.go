@@ -2,9 +2,9 @@ package actions
 
 import (
 	"encoding/json"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/db"
-	"github.com/wongyinlong/hsnNet/models"
+	"conf"
+	"db"
+	"models"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"

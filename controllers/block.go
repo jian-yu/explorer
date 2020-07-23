@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/db"
-	"github.com/wongyinlong/hsnNet/models"
+	"conf"
+	"db"
+	"models"
 	"gopkg.in/mgo.v2/bson"
 )
 

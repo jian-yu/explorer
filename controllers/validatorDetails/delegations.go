@@ -2,8 +2,8 @@ package validatorDetails
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/models/validatorsDetail"
+	"conf"
+	"models/validatorsDetail"
 	"strings"
 )
 

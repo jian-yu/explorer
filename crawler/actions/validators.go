@@ -2,19 +2,26 @@ package actions
 
 import (
 	"encoding/json"
+	"explorer/common"
+	"explorer/conf"
+	"explorer/crawler"
+	"explorer/crawler/actions/validatorDetails"
+	"explorer/db"
+	"explorer/model"
+	"github.com/go-resty/resty/v2"
 	"github.com/shopspring/decimal"
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/crawler/actions/validatorDetails"
-	"github.com/wongyinlong/hsnNet/db"
-	"github.com/wongyinlong/hsnNet/models"
-	"go.uber.org/zap"
-	"io/ioutil"
-	"net/http"
+	"github.com/spf13/viper"
 	"strconv"
 	"time"
 )
 
-func GetValidators(config conf.Config, log zap.Logger, ) {
+func GetValidators() {
+	var httpClient = resty.New()
+	mgoStore := db.NewMongoStore()
+	validatorOperator := common.NewValidator(mgoStore)
+
+	var coinToVoitingPower  = viper.GetFloat64(`Public.CoinToVoitingPower`)
+
 	for {
 		// 获取验证人列表集合 unbonding bonded unbonded
 		// http://172.38.8.89:1317/staking/validators?status=unbonding&page=1
@@ -22,95 +29,77 @@ func GetValidators(config conf.Config, log zap.Logger, ) {
 		// http://172.38.8.89:1317/staking/validators?status=unbonded&page=1
 		//var validatorList ValidatorList
 
-		var validators models.Validators
+		var validators model.Validators
+		var validatorInfos []model.ValidatorInfo
 
-		var validatorInfos []models.ValidatorInfo
-		//var validatorInfo models.ValidatorInfo
-		ValidatorsSet := getValidatorsSets(config.Public.ValidatorsSetLimit)
+		ValidatorsSet := validatorOperator.GetValidatorSet(crawler.ValidatorSetCap)
 
-		bondedUrl := config.Remote.Lcd + "/staking/validators?status=bonded"
-		unbondedUrl := config.Remote.Lcd + "/staking/validators?status=unbonded"
-		unbondingdUrl := config.Remote.Lcd + "/staking/validators?status=unbonding"
-		c := &http.Client{
-			Timeout: time.Second * config.Param.HTTPGetTimeOut,
-		}
-		resp, err := c.Get(bondedUrl)
+		bondedUrl := crawler.LcdURL + "/staking/validators?status=bonded"
+		unbondedUrl := crawler.LcdURL + "/staking/validators?status=unbonded"
+		unbondingdUrl := crawler.LcdURL + "/staking/validators?status=unbonding"
+
+		rsp, err := httpClient.R().Get(bondedUrl)
 		if err != nil {
-			log.Info("Can not get Validators", zap.String("err", err.Error()))
-			time.Sleep(time.Second * config.Param.CanNotGetErrorInterval)
+			logger.Err(err).Msg(`get bonded validator`)
+			time.Sleep(time.Second *2)
 			continue
 		}
-		jsonStrBondedValidators, _ := ioutil.ReadAll(resp.Body)
-		resp, err = c.Get(unbondedUrl)
-		if err != nil {
-			log.Info("Can not get Validators", zap.String("err", err.Error()))
-			time.Sleep(time.Second * config.Param.CanNotGetErrorInterval)
-			continue
-		}
-		jsonStrUnBondedValidators, _ := ioutil.ReadAll(resp.Body)
-		resp, err = c.Get(unbondingdUrl)
-		if err != nil {
-			log.Info("Can not get Validators", zap.String("err", err.Error()))
-			time.Sleep(time.Second * config.Param.CanNotGetErrorInterval)
-			continue
-		}
-		jsonStrUnBondingValidators, _ := ioutil.ReadAll(resp.Body)
-		// get validators basic information
-		resp.Body.Close()
-		err = json.Unmarshal(jsonStrBondedValidators, &validators)
-		if err != nil {
-			log.Info("Bonded validator list is empty!")
-		} else {
-			for _, item := range validators.Result {
-				info := dealWithValidatorList(item, config.Public.CoinToVoitingPower, ValidatorsSet, log)
-				validatorInfos = append(validatorInfos, info)
-			}
-		}
-
-		err = json.Unmarshal(jsonStrUnBondedValidators, &validators)
-
-		if err != nil {
-			log.Info("UnBonded validator list is empty!")
-		} else {
+		err = json.Unmarshal(rsp.Body(), &validators)
+		if err == nil{
 			for _, item := range validators.Result {
 				//test
-				info := dealWithValidatorList(item, config.Public.CoinToVoitingPower, ValidatorsSet, log)
+				info := dealWithValidatorList(item, coinToVoitingPower, ValidatorsSet)
 				validatorInfos = append(validatorInfos, info)
-
 			}
 		}
-		err = json.Unmarshal(jsonStrUnBondingValidators, &validators)
 
+		rsp, err = httpClient.R().Get(unbondingdUrl)
 		if err != nil {
-			log.Info("Unbonding validator list is empty!")
-		} else {
+			logger.Err(err).Msg(`get unbonding validator`)
+			time.Sleep(time.Second *2)
+			continue
+		}
+		err = json.Unmarshal(rsp.Body(), &validators)
+		if err == nil {
 			for _, item := range validators.Result {
-				info := dealWithValidatorList(item, config.Public.CoinToVoitingPower, ValidatorsSet, log)
+				//test
+				info := dealWithValidatorList(item, coinToVoitingPower, ValidatorsSet)
 				validatorInfos = append(validatorInfos, info)
 			}
 		}
-		//validatorInfo.DeleteAllInfo()
-		storeValidatorsInfo(&validatorInfos, log)
-		time.Sleep(time.Second * config.Param.ValidatorsSetsInterval)
+
+		rsp, err = httpClient.R().Get(unbondedUrl)
+		if err != nil {
+			logger.Err(err).Msg(`get unbonded validator`)
+			time.Sleep(time.Second *2)
+			continue
+		}
+		err = json.Unmarshal(rsp.Body(), &validators)
+		if err == nil {
+			for _, item := range validators.Result {
+				//test
+				info := dealWithValidatorList(item, coinToVoitingPower, ValidatorsSet)
+				validatorInfos = append(validatorInfos, info)
+			}
+		}
+
+		for _, info := range validatorInfos {
+			validatorOperator.SetInfo(info)
+		}
+
+		time.Sleep(time.Second * 4)
 	}
 }
 
-func storeValidatorsInfo(vi *[]models.ValidatorInfo, log zap.Logger) {
-	for _, item := range *vi {
-		// mongo upsert
-		item.SetInfo(log)
-	}
-
-}
 
 func getAllPledgenTokens() decimal.Decimal {
 	/* GET PLEDGEN TOKENS FROM DB*/
-	var Info models.Infomation
+	var Info model.Information
 	session := db.NewDBConn()
 	defer session.Close()
 	dbConn := session.DB(conf.NewConfig().DBName)
 	dbConn.C("public").Find(nil).Sort("-height").One(&Info)
-	tokens := strconv.Itoa(Info.PledgeHsn)
+	tokens := strconv.Itoa(Info.PledgeCoin)
 	decimalTotalHsn, _ := decimal.NewFromString(tokens)
 	return decimalTotalHsn
 }
@@ -127,12 +116,8 @@ func getUptime(vs *[]models.ValidatorsSet, pbKey string) int {
 	return count
 }
 
-func getValidatorsSets(limit int) *[]models.ValidatorsSet {
-	var vSets models.ValidatorsSet
-	vs := vSets.GetInfo(limit)
-	return vs
-}
-func dealWithValidatorList(item models.Result, CoinToVoitingPower float32, VS *[]models.ValidatorsSet, log zap.Logger) models.ValidatorInfo {
+
+func dealWithValidatorList(item models.Result, CoinToVoitingPower float64, VS *[]models.ValidatorsSet) models.ValidatorInfo {
 	//time.Sleep(time.Second * 1) // need to fix panic.被除数可能为0
 	go validatorDetails.MakeBaseInfo(item, VS, log)
 	go SetValidatorHashAddress(item.OperatorAddress, item.ConsensusPubkey, log)
@@ -145,7 +130,7 @@ func dealWithValidatorList(item models.Result, CoinToVoitingPower float32, VS *[
 	validatorInfo.Commission = item.Commission.CommissionRates.Rate
 	othersDelegation, _ := decimal.NewFromString(item.Tokens)
 	floatAmount := othersDelegation
-	floatCoinToVoitingPower := decimal.NewFromFloat32(CoinToVoitingPower)
+	floatCoinToVoitingPower := decimal.NewFromFloat(CoinToVoitingPower)
 	tempAmount := floatAmount.Div(floatCoinToVoitingPower)
 	validatorInfo.VotingPower.Amount, _ = tempAmount.Float64()
 	// may be has some problem

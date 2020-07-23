@@ -1,11 +1,4 @@
-package models
-
-import (
-	"github.com/wongyinlong/hsnNet/conf"
-	"github.com/wongyinlong/hsnNet/db"
-	"go.uber.org/zap"
-	"gopkg.in/mgo.v2/bson"
-)
+package model
 
 type BlockInfo struct {
 	BlockMeta BlockMeta `json:"block_meta"`
@@ -77,44 +70,44 @@ type PreCommitsList struct {
 	ValidatorIndex   string  `json:"validator_index"`
 	Signature        string  `json:"signature"`
 }
-type blocksHeights struct {
+type BlocksHeights struct {
 	IntHeight int `json:"int_height"`
 }
 
-func (b *BlockInfo) SetInfo(log zap.Logger) {
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	defer log.Sync()
-	dbConn := session.DB(conf.NewConfig().DBName)
-	c := dbConn.C("block")
-	err := c.Insert(&b)
-
-	if err != nil {
-		log.Error("insert block data error", zap.String("height", b.Block.Header.Height), zap.String("error", err.Error()))
-	} else {
-		log.Info("insert block data ", zap.String("height", b.Block.Header.Height))
-	}
-
-}
-func (b *BlockInfo) GetAimHeightAndBlockHeight() (int, int) {
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
-	var block BlockInfo
-	var public Infomation
-	dbConn.C("public").Find(nil).Sort("-height").One(&public)
-	dbConn.C("block").Find(nil).Sort("-intheight").One(&block)
-	lastBlockHeight := block.IntHeight
-	publicHeight := public.Height
-	return lastBlockHeight, publicHeight
-}
-
-func (b *BlockInfo) GetBlockListIfHasTx(height int) []blocksHeights {
-
-	var heights []blocksHeights
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
-	_ = dbConn.C("block").Find(bson.M{"intheight": bson.M{"$gte": height}, "block.header.numtxs": bson.M{"$ne": "0"}}).All(&heights)
-	return heights
-}
+//func (b *BlockInfo) SetInfo(log zap.Logger) {
+//	var session = db.NewDBConn() //db
+//	defer session.Close()
+//	defer log.Sync()
+//	dbConn := session.DB(conf.NewConfig().DBName)
+//	c := dbConn.C("block")
+//	err := c.Insert(&b)
+//
+//	if err != nil {
+//		log.Error("insert block data error", zap.String("height", b.Block.Header.Height), zap.String("error", err.Error()))
+//	} else {
+//		log.Info("insert block data ", zap.String("height", b.Block.Header.Height))
+//	}
+//
+//}
+//func (b *BlockInfo) GetAimHeightAndBlockHeight() (int, int) {
+//	var session = db.NewDBConn() //db
+//	defer session.Close()
+//	dbConn := session.DB(conf.NewConfig().DBName)
+//	var block BlockInfo
+//	var public Infomation
+//	dbConn.C("public").Find(nil).Sort("-height").One(&public)
+//	dbConn.C("block").Find(nil).Sort("-intheight").One(&block)
+//	lastBlockHeight := block.IntHeight
+//	publicHeight := public.Height
+//	return lastBlockHeight, publicHeight
+//}
+//
+//func (b *BlockInfo) GetBlockListIfHasTx(height int) []blocksHeights {
+//
+//	var heights []blocksHeights
+//	var session = db.NewDBConn() //db
+//	defer session.Close()
+//	dbConn := session.DB(conf.NewConfig().DBName)
+//	_ = dbConn.C("block").Find(bson.M{"intheight": bson.M{"$gte": height}, "block.header.numtxs": bson.M{"$ne": "0"}}).All(&heights)
+//	return heights
+//}

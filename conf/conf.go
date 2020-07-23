@@ -4,21 +4,6 @@ import "time"
 
 func NewConfig() Config {
 	return Config{
-		//DBstring:       "mongodb://hsnnet:jiulian666@hsn_dev_mongo:27017/admin",
-		//DBName:         "hsnNet",
-		//GenesisAddress: "http://127.0.0.1:26678/genesis?",
-		//Remote: RpcLcd{
-		//	Rpc: "http://127.0.0.1:26678",
-		//	Lcd: "http://127.0.0.1:1317",
-		//},
-		//DBstring:       "mongodb://hsnhub_dev_test:hsn_test@172.38.8.89:27890/hsnhub_db_dev_test", //test
-		//DBName :"hsnhub_db_dev_test",//test
-		//
-		//GenesisAddress: "http://172.38.8.89:26678/genesis?",
-		//Remote: RpcLcd{
-		//	Rpc: "http://172.38.8.89:26678",
-		//	Lcd: "http://172.38.8.89:1317",
-		//},
 		DBstring:       "127.0.0.1:27017/HsnBeta3", //test
 		DBName:         "HsnBeta3",                 //test
 		GenesisAddress: "http://172.38.8.89:26678/genesis?",
