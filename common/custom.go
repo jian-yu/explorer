@@ -3,6 +3,8 @@ package common
 import (
 	"explorer/db"
 	"explorer/model"
+	"github.com/shopspring/decimal"
+	"strconv"
 )
 
 type custom struct {
@@ -36,4 +38,15 @@ func (c *custom) GetInfo() model.Information {
 		logger.Err(err).Msg(`GetInfo`)
 	}
 	return info
+}
+
+func (c *custom) GetAllPledgenTokens() decimal.Decimal {
+	var info model.Information
+	conn := c.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	_ = conn.C("public").Find(nil).Sort("-height").One(&info)
+	tokens := strconv.Itoa(info.PledgeCoin)
+	decimalTotalHsn, _ := decimal.NewFromString(tokens)
+	return decimalTotalHsn
 }

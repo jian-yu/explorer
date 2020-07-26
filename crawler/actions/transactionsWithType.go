@@ -1,13 +1,11 @@
 package actions
 
 import (
+	"explorer/model"
 	"github.com/bitly/go-simplejson"
-	"conf"
-	"db"
-	"models"
-	"go.uber.org/zap"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -22,9 +20,9 @@ import (
 //http://172.38.8.89:1317/txs?message.action=multisend
 // .. Unfinished
 
-func GetTxs(config conf.Config, log zap.Logger, chainName string) {
+func (a *action) GetTxs() {
 
-	var Lcd = config.Remote.Lcd
+	var Lcd = a.LcdURL
 	var SendUrl = Lcd + "/txs?message.action=send"
 	var DelegateUrl = Lcd + "/txs?message.action=delegate"
 	var VoteUrl = Lcd + "/txs?message.action=vote"
@@ -40,44 +38,42 @@ func GetTxs(config conf.Config, log zap.Logger, chainName string) {
 	var DepositUrl = Lcd + "/txs?message.action=deposit"
 	//get the transaction judge whether it is stored in the database
 	for {
-		getTxs(SendUrl, log, chainName, "send")
-		getTxs(DelegateUrl, log, chainName, "delegate")
-		getTxs(RewardCommissionUrl, log, chainName, "commission")
-		getTxs(RewardUrl, log, chainName, "reward")
-		getTxs(VoteUrl, log, chainName, "vote")
-		getTxs(UnDelegateUrl, log, chainName, "unbonding")
-		getTxs(MultiSendUrl, log, chainName, "multisend")
-		getTxs(ReDelegateUrl, log, chainName, "redelegate")
-		getTxs(CreateValidatorUrl, log, chainName, "createValidator")
-		getTxs(EditValidatorUrl, log, chainName, "editValidator")
-		getTxs(EditAddressUrl, log, chainName, "editAddress")
-		getTxs(SubmitProposalUrl, log, chainName, "submitProposal")
-		getTxs(DepositUrl, log, chainName, "deposit")
-		time.Sleep(time.Second * config.Param.TransactionsInterval) //Avoid frequent request api
+		a.getTxs(SendUrl, a.ChainName, "send")
+		a.getTxs(DelegateUrl, a.ChainName, "delegate")
+		a.getTxs(RewardCommissionUrl, a.ChainName, "commission")
+		a.getTxs(RewardUrl, a.ChainName, "reward")
+		a.getTxs(VoteUrl, a.ChainName, "vote")
+		a.getTxs(UnDelegateUrl, a.ChainName, "unbonding")
+		a.getTxs(MultiSendUrl, a.ChainName, "multisend")
+		a.getTxs(ReDelegateUrl, a.ChainName, "redelegate")
+		a.getTxs(CreateValidatorUrl, a.ChainName, "createValidator")
+		a.getTxs(EditValidatorUrl, a.ChainName, "editValidator")
+		a.getTxs(EditAddressUrl, a.ChainName, "editAddress")
+		a.getTxs(SubmitProposalUrl, a.ChainName, "submitProposal")
+		a.getTxs(DepositUrl, a.ChainName, "deposit")
+		time.Sleep(time.Second * 4) //Avoid frequent request api
 	}
 
 }
-func getTxs(url string, log zap.Logger, chainName string, types string) {
-
-	page := getPage(types)
+func (a *action)getTxs(url string, chainName string, types string) {
+	var httpcli = resty.New()
+	page := a.getPage(types)
 	if page == 0 {
 		page = 1
 	}
 	for {
 		tempUrl := url
-		URL := tempUrl + "&page=" + strconv.Itoa(page)
-		c := &http.Client{
-			Timeout: time.Second * conf.NewConfig().Param.HTTPGetTimeOut,
-		}
-		resp, err := c.Get(URL)
+		url := tempUrl + "&page=" + strconv.Itoa(page)
+
+		rsp,err := httpcli.R().Get(url)
+
 		if err != nil {
-			log.Error("get "+types+" Txs failed!", zap.String("error", err.Error()))
-			time.Sleep(time.Second * conf.NewConfig().Param.TransactionsInterval)
+			log.Err(err).Interface(`url`,url).Msg(`getTxs`)
+			time.Sleep(time.Second * 4)
 			continue
 		}
-		var txsInfo models.Txs
-		jsonObj, _ := simplejson.NewFromReader(resp.Body)
-		_ = resp.Body.Close()
+		var txsInfo model.Txs
+		jsonObj, _ := simplejson.NewFromReader(rsp.RawBody())
 		jsonTxs, _ := jsonObj.Get("txs").Array()
 		txsError, _ := jsonObj.Get("error").String()
 		if txsError != "" {
@@ -88,7 +84,7 @@ func getTxs(url string, log zap.Logger, chainName string, types string) {
 
 		for i := 0; i < lenTxs; i++ {
 			hash, _ := jsonObj.Get("txs").GetIndex(i).Get("txhash").String()
-			flage := txsInfo.CheckHash(hash)
+			flage := a.Transaction.CheckHash(hash)
 			if flage == 0 {
 				height, _ := jsonObj.Get("txs").GetIndex(i).Get("height").String()
 				status, _ := jsonObj.Get("txs").GetIndex(i).Get("logs").GetIndex(0).Get("success").Bool()
@@ -250,12 +246,12 @@ func getTxs(url string, log zap.Logger, chainName string, types string) {
 						validatorList = append(validatorList, validator)
 						delegatorList = append(delegatorList, delegator)
 					case "cosmos-sdk/MsgCreateValidator":
-						var mappingValidatorDelegator models.ValidatorAddressAndDelegatorAddress
+						var mappingValidatorDelegator model.ValidatorToDelegatorAddress
 						mappingValidatorDelegator.ValidatorAddress, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("validator_address").String()
 						mappingValidatorDelegator.DelegatorAddress, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("delegator_address").String()
-						Sign, _ := mappingValidatorDelegator.Check(mappingValidatorDelegator.ValidatorAddress)
-						if Sign == 0 {
-							mappingValidatorDelegator.Set(log)
+						sign, _ := a.Validator.Check(mappingValidatorDelegator.ValidatorAddress)
+						if sign == 0 {
+							a.Validator.SetValidatorToDelegatorAddr(mappingValidatorDelegator)
 						}
 						strAmount, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("value").Get("amount").String()
 						floatAmount, _ := strconv.ParseFloat(strAmount, 64)
@@ -320,7 +316,7 @@ func getTxs(url string, log zap.Logger, chainName string, types string) {
 				txsInfo.InputsAddress = inputsAddress
 				txsInfo.VoterAddress = voterAddress
 				txsInfo.Options = options
-				txsInfo.SetInfo(log)
+				a.Transaction.SetInfo(txsInfo)
 				//fmt.Println(fromAddress)
 				//fmt.Println(toAddress)
 				//fmt.Println(outputsAddress)
@@ -333,11 +329,11 @@ func getTxs(url string, log zap.Logger, chainName string, types string) {
 
 }
 
-func getPage(types string) int {
-	var txsInfo models.Txs
-	session := db.NewDBConn()
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
-	_ = dbConn.C("Txs").Find(bson.M{"type": types}).Sort("-height").One(&txsInfo)
+func (a *action)getPage(types string) int {
+	var txsInfo model.Txs
+
+	conn := a.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+	_ = conn.C("Txs").Find(bson.M{"type": types}).Sort("-height").One(&txsInfo)
 	return txsInfo.Page
 }

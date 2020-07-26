@@ -35,7 +35,7 @@ type ValidatorDelegatorNums struct {
 }
 
 type Delegator struct {
-	Result Result `json:"result"`
+	Result DResult `json:"result"`
 }
 
 type DelegatorExtra struct {

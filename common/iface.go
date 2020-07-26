@@ -3,6 +3,7 @@ package common
 import (
 	"explorer/model"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
 )
 
 var logger = log.With().Logger()
@@ -16,6 +17,7 @@ type Validator interface {
 	SetValidatorSet(vs model.ValidatorSet)
 	GetValidatorSet(limit int) *[]model.ValidatorSet
 	SetValidatorToDelegatorAddr(v2d model.ValidatorToDelegatorAddress)
+	Check(address string) (int, string)
 	CheckDelegatorAddress(address string) (string, string)
 }
 
@@ -27,14 +29,15 @@ type Block interface {
 
 type Custom interface {
 	SetInfo(info model.Information)
-	GetInfo()model.Information
+	GetInfo() model.Information
+	GetAllPledgenTokens() decimal.Decimal
 }
 
 type Transaction interface {
 	SetInfo(info model.Txs)
-	GetInfo(head int, page int, size int)([]model.Txs, int)
-	GetDetail(txHash string)model.Txs
-	CheckHash(txHash string)int
+	GetInfo(head int, page int, size int) ([]model.Txs, int)
+	GetDetail(txHash string) model.Txs
+	CheckHash(txHash string) int
 	GetValidatorsTransactions(address string)
 	GetPowerEventInfo(address string, page, size int) (*[]model.Txs, int)
 	GetDelegatorTxs(address string, page, size int) (*[]model.Txs, int)
@@ -54,7 +57,7 @@ type Proposer interface {
 type ValidatorDetail interface {
 	Set(info model.ExtraValidatorInfo)
 	Update(info model.ExtraValidatorInfo)
-	Check(info model.ExtraValidatorInfo)int
+	Check(info model.ExtraValidatorInfo) int
 	GetOne(address string) *model.ExtraValidatorInfo
 }
 
@@ -67,9 +70,9 @@ type Delegator interface {
 }
 
 type Account interface {
-	GetInfo(address string)(string,string)
+	GetInfo(address string) (string, string)
 	GetWithDrawAddress(address string) string
-	GetDelegator(address string)*model.DelegatorExtra
+	GetDelegator(address string) *model.DelegatorExtra
 	GetDelegateReward(address string) string
 	GetUnbonding(address string) *model.Unbonding
 }

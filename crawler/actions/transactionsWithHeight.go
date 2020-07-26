@@ -1,11 +1,9 @@
 package actions
 
 import (
+	"explorer/model"
 	"github.com/bitly/go-simplejson"
-	"conf"
-	"models"
-	"go.uber.org/zap"
-	"net/http"
+	"github.com/go-resty/resty/v2"
 	"strconv"
 	"time"
 )
@@ -20,7 +18,7 @@ import (
 //http://172.38.8.89:1317/txs?message.action=multisend
 // .. Unfinished
 
-func GetTxs2(config conf.Config, log zap.Logger, chainName string) {
+func (a *action) GetTxs2() {
 	//for loop
 	// get tx height ,last checked height
 	// get aim height, public height
@@ -28,59 +26,48 @@ func GetTxs2(config conf.Config, log zap.Logger, chainName string) {
 	//get height list ( if block.tx >0 ),height > nowHeight ,
 	// get txs
 	// sleep 30s
-	var tx models.Txs
-	var block models.BlockInfo
-	nowHeight := tx.GetTxHeight()
+	var tx model.Txs
+	nowHeight := a.Transaction.GetTxHeight(tx)
 	for {
-
 		var index = 0
-		blockHeightList := block.GetBlockListIfHasTx(nowHeight)
+		blockHeightList := a.Block.GetBlockListIfHasTx(nowHeight)
 		lenBlockList := len(blockHeightList)
 		if lenBlockList != 0 {
 			for index < lenBlockList {
 				nowHeight = blockHeightList[index].IntHeight
-				err := getTxs2(nowHeight, config, log, chainName)
-				if err != nil {
-					continue
-				} else {
+				err := a.getTxs2(nowHeight, a.LcdURL, a.ChainName)
+				if err == nil {
 					index++
 				}
-
 			}
 		}
-		time.Sleep(time.Second * config.Param.TransactionsInterval)
-
+		time.Sleep(time.Second * 4)
 	}
 
 }
-func getTxs2(height int, config conf.Config, log zap.Logger, chainName string) error {
+func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
+	var httpCli = resty.New()
+	var txsInfo model.Txs
+
 	msgsType := ""
-	tempUrl := config.Remote.Lcd + "/txs?tx.height="
+	tempUrl := lcdURL + "/txs?tx.height="
 	strHeight := strconv.Itoa(height)
-	URL := tempUrl + strHeight
-	c := &http.Client{
-		Timeout: time.Second * config.Param.HTTPGetTimeOut,
-	}
-	resp, err := c.Get(URL)
+
+	url := tempUrl + strHeight
+	rsp, err := httpCli.R().Get(url)
 	if err != nil {
-		log.Error("get  Txs failed!", zap.String("error", err.Error()))
-		time.Sleep(time.Second * conf.NewConfig().Param.TransactionsInterval)
 		return err
-		//continue
 	}
-	var txsInfo models.Txs
-	jsonObj, _ := simplejson.NewFromReader(resp.Body)
-	_ = resp.Body.Close()
+	jsonObj, _ := simplejson.NewFromReader(rsp.RawBody())
 	jsonTxs, _ := jsonObj.Get("txs").Array()
 	txsError, _ := jsonObj.Get("error").String()
 	if txsError != "" {
-		//break
 	}
 
 	lenTxs := len(jsonTxs)
 	for i := 0; i < lenTxs; i++ {
 		hash, _ := jsonObj.Get("txs").GetIndex(i).Get("txhash").String()
-		flage := txsInfo.CheckHash(hash)
+		flage := a.Transaction.CheckHash(hash)
 		if flage == 0 {
 			height, _ := jsonObj.Get("txs").GetIndex(i).Get("height").String()
 			status, _ := jsonObj.Get("txs").GetIndex(i).Get("logs").GetIndex(0).Get("success").Bool()
@@ -256,12 +243,12 @@ func getTxs2(height int, config conf.Config, log zap.Logger, chainName string) e
 					delegatorList = append(delegatorList, delegator)
 				case "cosmos-sdk/MsgCreateValidator":
 					msgsType = "createValidator"
-					var mappingValidatorDelegator models.ValidatorAddressAndDelegatorAddress
+					var mappingValidatorDelegator model.ValidatorToDelegatorAddress
 					mappingValidatorDelegator.ValidatorAddress, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("validator_address").String()
 					mappingValidatorDelegator.DelegatorAddress, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("delegator_address").String()
-					Sign, _ := mappingValidatorDelegator.Check(mappingValidatorDelegator.ValidatorAddress)
-					if Sign == 0 {
-						mappingValidatorDelegator.Set(log)
+					sign, _ := a.Validator.Check(mappingValidatorDelegator.ValidatorAddress)
+					if sign == 0 {
+						a.Validator.SetValidatorToDelegatorAddr(mappingValidatorDelegator)
 					}
 					strAmount, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("value").Get("amount").String()
 					floatAmount, _ := strconv.ParseFloat(strAmount, 64)
@@ -334,7 +321,8 @@ func getTxs2(height int, config conf.Config, log zap.Logger, chainName string) e
 			txsInfo.InputsAddress = inputsAddress
 			txsInfo.VoterAddress = voterAddress
 			txsInfo.Options = options
-			txsInfo.SetInfo(log)
+			a.Transaction.SetInfo(txsInfo)
+			//txsInfo.SetInfo(log)
 			//obj,_ := json.Marshal(txsInfo)
 			//fmt.Println(string(obj))
 			//fmt.Println(fromAddress)

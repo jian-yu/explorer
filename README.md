@@ -1,2 +1,2 @@
-# hsnNet
-HSN blockChain WebSite（dev chain）
+# hschain
+hschain web api server（testnet）

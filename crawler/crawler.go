@@ -2,9 +2,9 @@ package crawler
 
 import (
 	"explorer/common"
+	"explorer/crawler/actions"
 	"explorer/db"
 	"github.com/spf13/viper"
-	"gopkg.in/resty.v1"
 )
 
 type Crawler interface {
@@ -19,8 +19,8 @@ type crawler struct {
 	Denom        string
 	CoinPriceURL string
 	VSetCap      int
-
-	httpClient *resty.Client
+	GenesisAddr string
+	VotingPower float64
 
 	db.MgoOperator
 	common.Validator
@@ -34,9 +34,9 @@ func New(m db.MgoOperator) Crawler {
 	chainName := viper.GetString(`Public.ChainName`)
 	denom := viper.GetString(`Public.Denom`)
 	coinPriceURL := viper.GetString(`Public.CoinPriceURL`)
+	genesisAddr := viper.GetString(`Public.CoinPriceURL`)
+	votingPower := viper.GetFloat64(`Public.CoinToVoitingPower`)
 
-	validator := common.NewValidator(m)
-	custom := common.NewCustom(m)
 	return &crawler{
 		LcdURL:       lcdURL,
 		RpcURL:       rpcURL,
@@ -44,14 +44,34 @@ func New(m db.MgoOperator) Crawler {
 		ChainName:    chainName,
 		CoinPriceURL: coinPriceURL,
 		Denom:        denom,
+		GenesisAddr: genesisAddr,
+		VotingPower: votingPower,
 		MgoOperator:  m,
-		Validator:    validator,
-		Custom:       custom,
 	}
 }
 
 func (c *crawler) Start() {
 
+	act := actions.NewAction(
+		c.MgoOperator,
+		c.LcdURL,
+		c.RpcURL,
+		c.ChainName,
+		c.Denom,
+		c.CoinPriceURL,
+		c.VSetCap,
+		c.VotingPower,
+		c.GenesisAddr,
+		)
+
+	go act.GetPublic()
+	go act.GetBlock()
+	go act.GetValidators()
+	go act.GetValidatorsSet()
+	go act.GetDelegations()
+	go act.GetDelegatorNums()
+	go act.GetTxs()
+	go act.GetTxs2()
 }
 
 func (c *crawler) Stop() {

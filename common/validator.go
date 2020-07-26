@@ -24,8 +24,8 @@ func (v *validator) SetInfo(info model.ValidatorInfo) {
 
 	c := conn.C("validators")
 	_, err := c.Upsert(bson.D{{"validatoraddress", info.ValidatorAddress}}, &info)
-	if err != nil{
-		log.Err(err).Interface(`validator address`,info).Msg(`SetInfo`)
+	if err != nil {
+		log.Err(err).Interface(`validator address`, info).Msg(`SetInfo`)
 	}
 }
 
@@ -77,7 +77,7 @@ func (v *validator) SetValidatorSet(vs model.ValidatorSet) {
 	c := conn.C("validatorsSet")
 	err := c.Insert(&vs)
 	if err != nil {
-		log.Err(err).Interface(`ValidatorSet`,vs).Msg(`SetValidatorSet`)
+		log.Err(err).Interface(`ValidatorSet`, vs).Msg(`SetValidatorSet`)
 	}
 }
 
@@ -100,9 +100,23 @@ func (v *validator) SetValidatorToDelegatorAddr(v2d model.ValidatorToDelegatorAd
 
 	c := conn.C("mapping")
 	err := c.Insert(&v2d)
-	if err != nil  {
+	if err != nil {
 		log.Err(err).Msg(`SetValidatorToDelegatorAddr`)
 	}
+}
+
+func (v *validator) Check(address string) (int, string) {
+	var tempValue model.ValidatorToDelegatorAddress
+	var count = 0
+
+	conn := v.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	conn.C("mapping").Find(bson.M{"validatoraddress": address}).One(&tempValue)
+	if tempValue.DelegatorAddress != "" {
+		count = 1
+	}
+	return count, tempValue.DelegatorAddress
 }
 
 func (v *validator) CheckDelegatorAddress(address string) (string, string) {
