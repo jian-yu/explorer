@@ -1,14 +1,14 @@
-package accountDetails
+package account
 
 import (
+	"explorer/controllers"
 	"github.com/astaxie/beego"
-	"conf"
-	"models"
 	"strings"
 )
 
 type DelegatorTxController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type txInfo struct {
 	Height int     `json:"height"`
@@ -37,17 +37,18 @@ func (dtc *DelegatorTxController) Get() {
 	address := dtc.GetString("address")
 	page, _ := dtc.GetInt("page", 0)
 	size, _ := dtc.GetInt("size", 5)
-	if address == "" || strings.Index(address, conf.NewConfig().Public.Bech32PrefixAccAddr) != 0 || strings.Index(address, conf.NewConfig().Public.Bech32PrefixValAddr) == 0 {
+	if address == "" || strings.Index(address, dtc.Base.Bech32PrefixAccAddr) != 0 || strings.Index(address, dtc.Base.Bech32PrefixValAddr) == 0 {
 		var errMsg TxBlocks
 		errMsg.Data = nil
 		errMsg.Code = "1"
 		errMsg.Msg = "Delegator address is empty Or Error address!"
 		dtc.Data["json"] = errMsg
 	} else {
-		var txList models.Txs
+		//var txList models.Txs
 		var txsSet = make([]txInfo, size)
 		var respJson TxBlocks
-		list, count := txList.GetDelegatorTxs(address, page, size)
+		list, count := dtc.Base.Transaction.GetDelegatorTxs(address, page, size)
+		//list, count := txList.GetDelegatorTxs(address, page, size)
 		for i, item := range *list {
 			txsSet[i].Height = item.Height
 			txsSet[i].Hash = item.TxHash

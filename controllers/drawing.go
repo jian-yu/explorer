@@ -1,10 +1,8 @@
 package controllers
 
 import (
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"db"
-	"models"
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"time"
@@ -12,6 +10,7 @@ import (
 
 type DrawingDataController struct {
 	beego.Controller
+	Base *BaseController
 }
 
 type Drawing struct {
@@ -32,26 +31,27 @@ type Items struct {
 //@router /
 func (ddc *DrawingDataController) Get() {
 	ddc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", ddc.Ctx.Request.Header.Get("Origin"))
-	var public models.Infomation
+	var public model.Information
 	var respJson Drawing
 	var price []float64
 	var token [] int
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
+
+	conn := ddc.Base.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
 	now := time.Now()
 	for i := 0; i < 10; i++ {
 		m, _ := time.ParseDuration("-1m")
 		h1 := now.Add(time.Duration(i) * m)
-		_ = dbConn.C("public").Find(bson.M{"time": bson.M{"$lt": h1}}).Sort("-height").One(&public)
+		_ = conn.C("public").Find(bson.M{"time": bson.M{"$lt": h1}}).Sort("-height").One(&public)
 		tempPrice, _ := strconv.ParseFloat(public.Price, 64)
 		price = append(price, tempPrice)
 	}
 	for i := 0; i < 24; i++ {
 		h, _ := time.ParseDuration("-1h")
 		h1 := now.Add(time.Duration(i) * h)
-		_ = dbConn.C("public").Find(bson.M{"time": bson.M{"$lt": h1}}).Sort("-height").One(&public)
-		token = append(token, public.PledgeHsn)
+		_ = conn.C("public").Find(bson.M{"time": bson.M{"$lt": h1}}).Sort("-height").One(&public)
+		token = append(token, public.PledgeCoin)
 
 	}
 

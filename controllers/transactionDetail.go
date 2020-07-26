@@ -3,17 +3,15 @@ package controllers
 import (
 	"encoding/json"
 	"github.com/astaxie/beego"
-	"conf"
-	"models"
-	"io/ioutil"
-	"net/http"
+	"github.com/go-resty/resty/v2"
 	"time"
 )
 
 type TxsMsgs interface {
 }
-type 	TxDetailControllers struct {
+type TxDetailControllers struct {
 	beego.Controller
+	Base *BaseController
 }
 type ErrorTxInfoBlock struct {
 	Code string `json:"code"`
@@ -31,8 +29,8 @@ type TXD struct {
 	Txhash string `json:"txhash"`
 	RawLog string `json:"raw_log"`
 	Logs   []struct {
-		Success bool `json:"success"`
-		Log string `json:"log"`
+		Success bool   `json:"success"`
+		Log     string `json:"log"`
 	} `json:"logs"`
 	GasWanted string `json:"gas_wanted"`
 	GasUsed   string `json:"gas_used"`
@@ -66,31 +64,29 @@ type TXD struct {
 // @Failure code 1
 // @router /
 func (td *TxDetailControllers) Get() {
-	td.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", td.Ctx.Request.Header.Get("Origin"))
-	config := conf.NewConfig()
-	hash := td.GetString("hash")
+	var httpCli = resty.New()
+	var msg Msgs
 	var txd TXD
-	//tx := item.GetDetail(hash)
-	var checkTxObj models.Txs
-	if hash == "" || checkTxObj.CheckHash(hash)==0{
+
+	td.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", td.Ctx.Request.Header.Get("Origin"))
+	hash := td.GetString("hash")
+
+	if hash == "" || td.Base.Transaction.CheckHash(hash) == 0 {
 		var txd ErrorTxInfoBlock
 		txd.Code = "1"
 		txd.Msg = "Hash address is empty or Error!"
 		txd.Data = nil
 		td.Data["json"] = txd
 	} else {
-		var msg Msgs
-		url := config.Remote.Lcd + "/txs/" + hash
-		c:=&http.Client{
-			Timeout:time.Second * config.Param.HTTPGetTimeOut,
-		}
-		resp, err := c.Get(url)
+		url := td.Base.LcdURL + "/txs/" + hash
+		rsp, err := httpCli.R().Get(url)
 		if err != nil {
-		} else {
-			defer resp.Body.Close()
+			logger.Err(err).Interface(`url`, url).Msg(`Get`)
+			td.Abort("500")
+			return
 		}
-		jsonStr, _ := ioutil.ReadAll(resp.Body)
-		json.Unmarshal(jsonStr, &txd)
+
+		err = json.Unmarshal(rsp.Body(), &txd)
 		msg.Data = txd
 		msg.Code = "0"
 		msg.Msg = "OK"

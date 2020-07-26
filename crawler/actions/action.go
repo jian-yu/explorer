@@ -3,7 +3,6 @@ package actions
 import (
 	"encoding/json"
 	"explorer/common"
-	"explorer/crawler"
 	"explorer/db"
 	"explorer/model"
 	"explorer/utils"
@@ -403,7 +402,7 @@ func (a *action) GetBlock() {
 			for publicHeight > lastBlockHeight {
 				lastBlockHeight = lastBlockHeight + 1
 
-				url := crawler.LcdURL + "/blocks/" + strconv.Itoa(lastBlockHeight)
+				url := a.LcdURL + "/blocks/" + strconv.Itoa(lastBlockHeight)
 				rsp, err := a.Client.R().Get(url)
 				if err != nil {
 					lastBlockHeight = lastBlockHeight - 1
@@ -432,11 +431,11 @@ func (a *action) GetValidators() {
 		var validators model.Validators
 		var validatorInfos []model.ValidatorInfo
 
-		ValidatorsSet := a.Validator.GetValidatorSet(crawler.ValidatorSetCap)
+		ValidatorsSet := a.Validator.GetValidatorSet(a.VSetCap)
 
-		bondedUrl := crawler.LcdURL + "/staking/validators?status=bonded"
-		unbondedUrl := crawler.LcdURL + "/staking/validators?status=unbonded"
-		unbondingdUrl := crawler.LcdURL + "/staking/validators?status=unbonding"
+		bondedUrl := a.LcdURL + "/staking/validators?status=bonded"
+		unbondedUrl := a.LcdURL + "/staking/validators?status=unbonded"
+		unbondingdUrl := a.LcdURL + "/staking/validators?status=unbonding"
 
 		rsp, err := a.Client.R().Get(bondedUrl)
 		if err != nil {

@@ -50,11 +50,11 @@ func (p *proposer) CheckValidator(pubkey string) (int, string) {
 	return count, vaak.ProposerHash
 }
 
-func (p *proposer) GetValidator(address string) string {
+func (p *proposer) GetValidator(hashAddr string) string {
 	var vaak model.ValidatorAddressAndKey
 	conn := p.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
-	_ = conn.C("mapping").Find(bson.M{"proposerhash": address}).One(&vaak)
+	_ = conn.C("mapping").Find(bson.M{"proposerhash": hashAddr}).One(&vaak)
 	return vaak.OperatorAddress
 }

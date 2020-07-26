@@ -48,7 +48,7 @@ func (t *transaction) GetInfo(head int, page int, size int) ([]model.Txs, int) {
 	err := conn.C("Txs").Find(bson.M{"height": bson.M{
 		"$lte": head}}).Sort("-height").Limit(size).Skip(page * size).All(&TxsSet)
 	if err != nil {
-		logger.Err(err).Interface(`params`,[]interface{}{head,page,size}).Msg(`GetInfo`)
+		logger.Err(err).Interface(`params`, []interface{}{head, page, size}).Msg(`GetInfo`)
 	}
 	totalTxsCount, _ := conn.C("Txs").Find(nil).Count()
 	return TxsSet, totalTxsCount

@@ -7,7 +7,7 @@ import (
 
 func init() {
 
-	beego.GlobalControllerRouter["controllers/accountDetails:BaseInfoController"] = append(beego.GlobalControllerRouter["controllers/accountDetails:BaseInfoController"],
+	beego.GlobalControllerRouter["controllers/account:BaseInfoController"] = append(beego.GlobalControllerRouter["controllers/account:BaseInfoController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -16,7 +16,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/accountDetails:DeleatorsController"] = append(beego.GlobalControllerRouter["controllers/accountDetails:DeleatorsController"],
+	beego.GlobalControllerRouter["controllers/account:DeleatorsController"] = append(beego.GlobalControllerRouter["controllers/account:DeleatorsController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -25,7 +25,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/accountDetails:DelegatorTxController"] = append(beego.GlobalControllerRouter["controllers/accountDetails:DelegatorTxController"],
+	beego.GlobalControllerRouter["controllers/account:DelegatorTxController"] = append(beego.GlobalControllerRouter["controllers/account:DelegatorTxController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -34,7 +34,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/accountDetails:KindsRewardController"] = append(beego.GlobalControllerRouter["controllers/accountDetails:KindsRewardController"],
+	beego.GlobalControllerRouter["controllers/account:KindsRewardController"] = append(beego.GlobalControllerRouter["controllers/account:KindsRewardController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -43,7 +43,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/accountDetails:UnbondingsController"] = append(beego.GlobalControllerRouter["controllers/accountDetails:UnbondingsController"],
+	beego.GlobalControllerRouter["controllers/account:UnbondingsController"] = append(beego.GlobalControllerRouter["controllers/account:UnbondingsController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,

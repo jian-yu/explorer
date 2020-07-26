@@ -1,22 +1,22 @@
-package validatorDetails
+package validator
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"db"
-	"models"
 	"gopkg.in/mgo.v2/bson"
 	"strings"
 )
 
 type ProposedBlocksController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type msgs struct {
-	Code string        `json:"code"`
-	Data []BlockSimple `json:"data"`
-	Msg  string        `json:"msg"`
-	Total int `json:"total"`
+	Code  string        `json:"code"`
+	Data  []BlockSimple `json:"data"`
+	Msg   string        `json:"msg"`
+	Total int           `json:"total"`
 }
 type BlockSimple struct {
 	Height    int    `json:"height"`
@@ -25,7 +25,6 @@ type BlockSimple struct {
 	Txs       string `json:"txs"`
 	Time      string `json:"time"`
 }
-
 
 // @Title Get
 // @Description get proposedBlocks
@@ -38,7 +37,7 @@ func (pbc *ProposedBlocksController) Get() {
 	head, _ := pbc.GetInt("head", 0)
 	page, _ := pbc.GetInt("page", 0)
 	size, _ := pbc.GetInt("size", 0)
-	if address == "" || strings.Index(address,conf.NewConfig().Public.Bech32PrefixValAddr)!=0  {
+	if address == "" || strings.Index(address, pbc.Base.Bech32PrefixValAddr) != 0 {
 		var errorMessage MsgErr
 		errorMessage.Code = "1"
 		errorMessage.Data = nil
@@ -46,9 +45,12 @@ func (pbc *ProposedBlocksController) Get() {
 		pbc.Data["json"] = errorMessage
 		pbc.ServeJSON()
 	}
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
+	//var session = db.NewDBConn() //db
+	//defer session.Close()
+	//dbConn := session.DB(conf.NewConfig().DBName)
+	conn := pbc.Base.GetDBConn()
+	defer conn.Session.Close()
+
 	if page == 0 {
 		// default page
 		page = 0
@@ -59,20 +61,21 @@ func (pbc *ProposedBlocksController) Get() {
 	}
 	if head == 0 {
 		// default last height
-		var public models.Infomation
-		_=dbConn.C("public").Find(nil).Sort("-height").One(&public)
+		var public model.Information
+		_ = conn.C("public").Find(nil).Sort("-height").One(&public)
 		head = public.Height
 
 	}
 
-	var blocks = make([]models.BlockInfo, size)
+	var blocks = make([]model.BlockInfo, size)
 	var blockInfoSimples = make([]BlockSimple, size)
 	var respJson msgs
-	var validatorAddress models.ValidatorAddressAndKey
-	hashAddress := validatorAddress.GetInfo(address)
-	_=dbConn.C("block").Find(
+	//var validatorAddress model.ValidatorAddressAndKey
+	hashAddress := pbc.Base.Proposer.GetInfo(address)
+	//hashAddress := validatorAddress.GetInfo(address)
+	_ = conn.C("block").Find(
 		bson.M{
-			"intheight": bson.M{"$lte": head,}, "block.header.proposeraddress": hashAddress}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
+			"intheight": bson.M{"$lte": head}, "block.header.proposeraddress": hashAddress}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
 	for i, item := range blocks {
 		blockInfoSimples[i].Height = item.IntHeight
 		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockId.Hash
@@ -80,7 +83,7 @@ func (pbc *ProposedBlocksController) Get() {
 		blockInfoSimples[i].Txs = item.Block.Header.NumTxs
 		blockInfoSimples[i].Time = item.Block.Header.Time
 	}
-	respJson.Total ,_= dbConn.C("block").Find(bson.M{"block.header.proposeraddress": hashAddress}).Count()
+	respJson.Total, _ = conn.C("block").Find(bson.M{"block.header.proposeraddress": hashAddress}).Count()
 	respJson.Data = blockInfoSimples
 	respJson.Code = "0"
 	respJson.Msg = "OK"

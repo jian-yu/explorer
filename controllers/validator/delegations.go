@@ -1,14 +1,15 @@
-package validatorDetails
+package validator
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"models/validatorsDetail"
 	"strings"
 )
 
 type DelegationsController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type MsgErr struct {
 	Code string `json:"code"`
@@ -44,7 +45,7 @@ func (dc *DelegationsController) Get() {
 	if size == 0 {
 		size = 5
 	}
-	if address == "" || strings.Index(address, conf.NewConfig().Public.Bech32PrefixValAddr) != 0 {
+	if address == "" || strings.Index(address, dc.Base.Bech32PrefixValAddr) != 0 {
 		var errorMessage MsgErr
 		errorMessage.Code = "1"
 		errorMessage.Data = nil
@@ -56,13 +57,17 @@ func (dc *DelegationsController) Get() {
 	var respJson DelegationMsg
 	var respJsonDelegations []Delegations
 	var respJsonDelegation Delegations
-	var delegations validatorsDetail.DelegatorObj
-	var baseInfo validatorsDetail.ExtraValidatorInfo
-	var validatorDelegationNums validatorsDetail.ValidatorDelegatorNums
-	validatorBaseInfo := baseInfo.GetOne(address)
+	//var delegations model.DelegatorObj
+	//var baseInfo model.ExtraValidatorInfo
+	//var validatorDelegationNums model.ValidatorDelegatorNums
 
-	items, totalDelegations := delegations.GetInfo(address, page, size)
-	oneDayAgoDelegations := validatorDelegationNums.GetInfo(address)
+	validatorBaseInfo := dc.Base.ValidatorDetail.GetOne(address)
+	//validatorBaseInfo := baseInfo.GetOne(address)
+
+	items, totalDelegations := dc.Base.Delegator.GetInfo(address, page, size)
+	//items, totalDelegations := delegations.GetInfo(address, page, size)
+	oneDayAgoDelegations := dc.Base.Delegator.GetDelegatorCount(address)
+	//oneDayAgoDelegations := validatorDelegationNums.GetInfo(address)
 	for _, item := range *items {
 		respJsonDelegation.Amount = getShares(items, item.DelegatorAddress)
 		respJsonDelegation.Address = item.DelegatorAddress
@@ -79,7 +84,7 @@ func (dc *DelegationsController) Get() {
 	dc.ServeJSON()
 }
 
-func getShares(items *[]validatorsDetail.DelegatorObj, address string) float64 {
+func getShares(items *[]model.DelegatorObj, address string) float64 {
 	var amount float64
 	for _, item := range *items {
 		if item.DelegatorAddress == address {

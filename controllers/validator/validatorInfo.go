@@ -1,15 +1,15 @@
-package validatorDetails
+package validator
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"models"
-	"models/validatorsDetail"
 	"strings"
 )
 
 type VaBaseInfoController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type MSGS struct {
 	Code string        `json:"code"`
@@ -35,12 +35,12 @@ type ValidatorInfo struct {
 		Amount  float64 `json:"amount"`
 		Percent float64 `json:"percent"`
 	} `json:"voting_power"`
-	HsnHeight   string  `json:"hsn_height"`
-	Details     string  `json:"details"`
-	TotalToken  float64 `json:"total_token"`
-	SelfToken   float64 `json:"self_token"`
-	OthersToken float64 `json:"others_token"`
-	MissedBlockList []validatorsDetail.MissBLockData `json:"missed_block_list"`
+	HsnHeight       string                `json:"hsn_height"`
+	Details         string                `json:"details"`
+	TotalToken      float64               `json:"total_token"`
+	SelfToken       float64               `json:"self_token"`
+	OthersToken     float64               `json:"others_token"`
+	MissedBlockList []model.MissBLockData `json:"missed_block_list"`
 }
 
 // @Title 获取validator detail
@@ -51,10 +51,10 @@ type ValidatorInfo struct {
 func (vbic *VaBaseInfoController) Get() {
 	vbic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", vbic.Ctx.Request.Header.Get("Origin"))
 	address := vbic.GetString("address")
-	var baseInfo validatorsDetail.ExtraValidatorInfo
-	var validatorInfo models.ValidatorInfo
+	//var baseInfo validatorsDetail.ExtraValidatorInfo
+	//var validatorInfo models.ValidatorInfo
 	var respObj ValidatorInfo
-	if address == "" || strings.Index(address, conf.NewConfig().Public.Bech32PrefixValAddr) != 0 {
+	if address == "" || strings.Index(address, vbic.Base.Bech32PrefixValAddr) != 0 {
 		var errMsg MSGError
 		errMsg.Code = "1"
 		errMsg.Data = nil
@@ -63,11 +63,14 @@ func (vbic *VaBaseInfoController) Get() {
 		vbic.ServeJSON()
 	}
 	//objBase
-	objBase := baseInfo.GetOne(address)
-	objValidator := validatorInfo.GetOne(address)
+	objBase := vbic.Base.ValidatorDetail.GetOne(address)
+	//objBase := baseInfo.GetOne(address)
+	objValidator := vbic.Base.Validator.GetOne(address)
+	//objValidator := validatorInfo.GetOne(address)
 	respObj.Jailed = objValidator.Jailed
 	respObj.Avater = objValidator.Avater
-	respObj.Rank = validatorInfo.GetValidatorRank(objValidator.VotingPower.Amount,objValidator.Jailed)
+	respObj.Rank = vbic.Base.Validator.GetValidatorRank(objValidator.VotingPower.Amount, objValidator.Jailed)
+	//respObj.Rank = validatorInfo.GetValidatorRank(objValidator.VotingPower.Amount,objValidator.Jailed)
 	respObj.AKA = objValidator.AKA
 	respObj.Address = objBase.Address
 	respObj.Validator = objBase.Validator

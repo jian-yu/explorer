@@ -62,8 +62,8 @@ type ValidatorDetail interface {
 }
 
 type Delegator interface {
-	GetDelegatorObj(address string, page int, size int) (*[]model.DelegatorObj, int)
-	SetDelegatorObj(delegator model.DelegatorObj)
+	GetInfo(address string, page int, size int) (*[]model.DelegatorObj, int)
+	SetInfo(delegator model.DelegatorObj)
 	SetDelegatorCount(vDelegator model.ValidatorDelegatorNums)
 	GetDelegatorCount(address string) int
 	DeleteInfo(sign int)

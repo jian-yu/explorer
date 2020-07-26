@@ -7,7 +7,7 @@ import (
 
 func init() {
 
-	beego.GlobalControllerRouter["controllers/validatorDetails:DelegationsController"] = append(beego.GlobalControllerRouter["controllers/validatorDetails:DelegationsController"],
+	beego.GlobalControllerRouter["controllers/validator:DelegationsController"] = append(beego.GlobalControllerRouter["controllers/validator:DelegationsController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -16,7 +16,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/validatorDetails:PowerEventController"] = append(beego.GlobalControllerRouter["controllers/validatorDetails:PowerEventController"],
+	beego.GlobalControllerRouter["controllers/validator:PowerEventController"] = append(beego.GlobalControllerRouter["controllers/validator:PowerEventController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -25,7 +25,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/validatorDetails:ProposedBlocksController"] = append(beego.GlobalControllerRouter["controllers/validatorDetails:ProposedBlocksController"],
+	beego.GlobalControllerRouter["controllers/validator:ProposedBlocksController"] = append(beego.GlobalControllerRouter["controllers/validator:ProposedBlocksController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,
@@ -34,7 +34,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["controllers/validatorDetails:VaBaseInfoController"] = append(beego.GlobalControllerRouter["controllers/validatorDetails:VaBaseInfoController"],
+	beego.GlobalControllerRouter["controllers/validator:VaBaseInfoController"] = append(beego.GlobalControllerRouter["controllers/validator:VaBaseInfoController"],
 		beego.ControllerComments{
 			Method:           "Get",
 			Router:           `/`,

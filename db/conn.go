@@ -9,7 +9,6 @@ import (
 type mongoStore struct {
 	URL  string
 	Name string
-	*viper.Viper
 	*mgo.Session
 }
 

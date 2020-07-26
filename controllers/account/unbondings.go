@@ -1,14 +1,15 @@
-package accountDetails
+package account
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"models/accountDetail"
 	"strings"
 )
 
 type UnbondingsController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type UnbondingserrMsg struct {
 	Data error  `json:"data"`
@@ -16,11 +17,11 @@ type UnbondingserrMsg struct {
 	Code string `json:"code"`
 }
 type UnbondingsMsg struct {
-	Data  accountDetail.Unbonding `json:"data"`
-	Msg   string                  `json:"msg"`
-	Total int                     `json:"total"`
-	Size  int                     `json:"size"`
-	Code  string                  `json:"code"`
+	Data  model.Unbonding `json:"data"`
+	Msg   string          `json:"msg"`
+	Total int             `json:"total"`
+	Size  int             `json:"size"`
+	Code  string          `json:"code"`
 }
 
 // @Title
@@ -34,7 +35,7 @@ func (uc *UnbondingsController) Get() {
 	page, _ := uc.GetInt("page", 0)
 	size, _ := uc.GetInt("size", 5)
 
-	if address == ""||  strings.Index(address,conf.NewConfig().Public.Bech32PrefixAccAddr)!=0 || strings.Index(address,conf.NewConfig().Public.Bech32PrefixValAddr)==0{
+	if address == "" || strings.Index(address, uc.Base.Bech32PrefixAccAddr) != 0 || strings.Index(address, uc.Base.Bech32PrefixValAddr) == 0 {
 		var msg baseInfoerrMsg
 		msg.Data = nil
 		msg.Msg = "Delegator address is empty Or Error address!"
@@ -42,8 +43,10 @@ func (uc *UnbondingsController) Get() {
 		uc.Data["json"] = msg
 	} else {
 		var msg UnbondingsMsg
-		var unbonding accountDetail.Unbonding
-		infos := unbonding.GetInfo(address)
+		//var unbonding accountDetail.Unbonding
+		infos := uc.Base.Account.GetUnbonding(address)
+		//infos := unbonding.GetInfo(address)
+		msg.Code = "0"
 		msg.Code = "0"
 		msg.Size = size
 		msg.Total = len(infos.Result)
@@ -56,9 +59,9 @@ func (uc *UnbondingsController) Get() {
 
 	uc.ServeJSON()
 }
-func pagination(page, size, totalSize int, infos *accountDetail.Unbonding) *accountDetail.Unbonding {
-	//accountDetail.Unbonding
-	var tempVar accountDetail.Unbonding
+func pagination(page, size, totalSize int, infos *model.Unbonding) *model.Unbonding {
+	//account.Unbonding
+	var tempVar model.Unbonding
 
 	if page*size <= 0 {
 		//return first page
@@ -71,11 +74,11 @@ func pagination(page, size, totalSize int, infos *accountDetail.Unbonding) *acco
 				tempVar.Result = append(tempVar.Result, infos.Result[i])
 			}
 		}
-	return &tempVar
+		return &tempVar
 	}
 
 	if page*size > 0 && (page+1)*size <= totalSize {
-		for i := (page * size); i < (page+1)*size; i++ {
+		for i := page * size; i < (page+1)*size; i++ {
 			tempVar.Result = append(tempVar.Result, infos.Result[i])
 		}
 		return &tempVar

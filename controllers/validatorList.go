@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"models"
 )
 
 type ValidatorsController struct {
 	beego.Controller
+	Base *BaseController
 }
 type MSGS struct {
 	Code string            `json:"code"`
@@ -19,9 +20,9 @@ type errMsg struct {
 	Msg  string `json:"msg"`
 }
 type ValidatorTypeList struct {
-	Jailed    []models.ValidatorInfo `json:"jailed"`
-	Active    []models.ValidatorInfo `json:"active"`
-	Candidate []models.ValidatorInfo `json:"candidate"`
+	Jailed    []model.ValidatorInfo `json:"jailed"`
+	Active    []model.ValidatorInfo `json:"active"`
+	Candidate []model.ValidatorInfo `json:"candidate"`
 }
 
 // @Title 获取Validators List
@@ -32,11 +33,12 @@ type ValidatorTypeList struct {
 func (vc *ValidatorsController) Get() {
 	vc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", vc.Ctx.Request.Header.Get("Origin"))
 	types := vc.GetString("type", "")
-	var validatorInfo models.ValidatorInfo
+	//var validatorInfo models.ValidatorInfo
 	var vtl ValidatorTypeList
-	var normallyValidatorList []models.ValidatorInfo
+	var normallyValidatorList []model.ValidatorInfo
 	var count int
-	list := validatorInfo.GetInfo()
+	//list := validatorInfo.GetInfo()
+	list := vc.Base.Validator.GetInfo()
 	if len(*list) == 0 {
 		var errMsg errMsg
 		errMsg.Data = nil
@@ -57,11 +59,12 @@ func (vc *ValidatorsController) Get() {
 			vtl.Jailed = append(vtl.Jailed, item)
 		} else {
 			lenNormallyValidatorList := len(normallyValidatorList)
-			if lenNormallyValidatorList == 0 {
-				item.Cumulative = item.VotingPower.Percent
-			} else {
+
+			if len(normallyValidatorList) > 0 {
 				aheadItemInNormallyList := lenNormallyValidatorList - 1
 				item.Cumulative = normallyValidatorList[aheadItemInNormallyList].Cumulative + item.VotingPower.Percent
+			} else {
+				item.Cumulative = item.VotingPower.Percent
 			}
 			normallyValidatorList = append(normallyValidatorList, item)
 			if count < 100 {

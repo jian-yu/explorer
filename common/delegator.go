@@ -17,7 +17,7 @@ func NewDelegator(m db.MgoOperator) Delegator {
 	}
 }
 
-func (d *delegator) GetDelegatorObj(address string, page int, size int) (*[]model.DelegatorObj, int) {
+func (d *delegator) GetInfo(address string, page int, size int) (*[]model.DelegatorObj, int) {
 	conn := d.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
@@ -37,7 +37,7 @@ func (d *delegator) GetDelegatorObj(address string, page int, size int) (*[]mode
 
 	return &tempObj, inOneIntervalDelegations
 }
-func (d *delegator) SetDelegatorObj(delegator model.DelegatorObj) {
+func (d *delegator) SetInfo(delegator model.DelegatorObj) {
 	conn := d.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 

@@ -8,7 +8,7 @@ import (
 )
 
 type Crawler interface {
-	Start()
+	Run()
 	Stop()
 }
 
@@ -50,7 +50,7 @@ func New(m db.MgoOperator) Crawler {
 	}
 }
 
-func (c *crawler) Start() {
+func (c *crawler) Run() {
 
 	act := actions.NewAction(
 		c.MgoOperator,

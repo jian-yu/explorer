@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"models"
 )
 
 type BlockTxController struct {
 	beego.Controller
+	Base *BaseController
 }
 
 // @Title
@@ -16,7 +16,6 @@ type BlockTxController struct {
 // @router /
 func (btc *BlockTxController) Get() {
 	btc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", btc.Ctx.Request.Header.Get("Origin"))
-	var txList models.Txs
 	var respJson TxBlocks
 	head, _ := btc.GetInt("head")
 	page, _ := btc.GetInt("page")
@@ -24,8 +23,9 @@ func (btc *BlockTxController) Get() {
 	if size == 0 {
 		size = 5
 	}
+
 	var txsSet = make([]txInfo, size)
-	list ,total := txList.GetSpecifiedHeight(head, page, size)
+	list, total := btc.Base.Transaction.GetSpecifiedHeight(head, page, size)
 	for i, item := range list {
 		txsSet[i].Height = item.Height
 		txsSet[i].Hash = item.TxHash
@@ -34,7 +34,7 @@ func (btc *BlockTxController) Get() {
 		txsSet[i].Time = item.TxTime
 		txsSet[i].Types = item.Type
 		txsSet[i].Nums = item.Plus
-		if item.Type =="reward"{
+		if item.Type == "reward" {
 			txsSet[i].Amount = getRewardAmount(item.WithDrawRewardAmout)
 		} else {
 			txsSet[i].Amount = getAmount(item.Amount)
@@ -44,7 +44,7 @@ func (btc *BlockTxController) Get() {
 	respJson.Code = "0"
 	respJson.Msg = "OK"
 	respJson.Data = txsSet
-	respJson.Total =total
+	respJson.Total = total
 	btc.Data["json"] = respJson
 	btc.ServeJSON()
 }

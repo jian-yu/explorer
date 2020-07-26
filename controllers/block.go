@@ -1,15 +1,14 @@
 package controllers
 
 import (
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"db"
-	"models"
 	"gopkg.in/mgo.v2/bson"
 )
 
 type BlockController struct {
 	beego.Controller
+	Base *BaseController
 }
 
 type Blocks struct {
@@ -39,11 +38,11 @@ func (bc *BlockController) Get() {
 	page, _ := bc.GetInt("page", 0)
 	size, _ := bc.GetInt("size", 0)
 
-	var session = db.NewDBConn() //db
-	defer session.Close()
-	dbConn := session.DB(conf.NewConfig().DBName)
-	var public models.Infomation
-	dbConn.C("public").Find(nil).Sort("-height").One(&public)
+	conn := bc.Base.GetDBConn()
+	defer conn.Session.Close()
+
+	var public model.Information
+	_ = conn.C("public").Find(nil).Sort("-height").One(&public)
 	if page == 0 {
 		// default page
 		page = 0
@@ -58,16 +57,16 @@ func (bc *BlockController) Get() {
 
 	}
 
-	var blocks = make([]models.BlockInfo, size)
+	var blocks = make([]model.BlockInfo, size)
 	var blockInfoSimples = make([]BlockSimple, size)
 	var respJson Blocks
-	dbConn.C("block").Find(bson.M{"intheight": bson.M{
+	_ = conn.C("block").Find(bson.M{"intheight": bson.M{
 		"$lte": head,}}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
 	for i, item := range blocks {
 		blockInfoSimples[i].Height = item.IntHeight
 		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockId.Hash
-		blockInfoSimples[i].Proposer = getProposerAddress(item.Block.Header.ProposerAddress)
-		blockInfoSimples[i].AKA = getAKAName(blockInfoSimples[i].Proposer)
+		blockInfoSimples[i].Proposer = bc.getProposerAddress(item.Block.Header.ProposerAddress)
+		blockInfoSimples[i].AKA = bc.getAKAName(blockInfoSimples[i].Proposer)
 		blockInfoSimples[i].Txs = item.Block.Header.NumTxs
 		blockInfoSimples[i].Time = item.Block.Header.Time
 	}
@@ -78,14 +77,12 @@ func (bc *BlockController) Get() {
 	bc.Data["json"] = respJson
 	bc.ServeJSON()
 }
-func getProposerAddress(hashAddress string) string {
-	var proposerAddress models.ValidatorAddressAndKey
-	address := proposerAddress.GetValidator(hashAddress)
+func (bc *BlockController) getProposerAddress(hashAddress string) string {
+	address := bc.Base.Proposer.GetValidator(hashAddress)
 	return address
 }
 
-func getAKAName(proposerAddress string) string {
-	var validatorInfo models.ValidatorInfo
-	validator := validatorInfo.GetOne(proposerAddress)
+func (bc *BlockController) getAKAName(proposerAddress string) string {
+	validator := bc.Base.Validator.GetOne(proposerAddress)
 	return validator.AKA
 }

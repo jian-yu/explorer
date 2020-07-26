@@ -1,14 +1,15 @@
-package validatorDetails
+package validator
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"models"
 	"strings"
 )
 
 type PowerEventController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 
 type powerEvents struct {
@@ -42,17 +43,18 @@ func (pwc *PowerEventController) Get() {
 	address := pwc.GetString("address", "")
 	page, _ := pwc.GetInt("page", 0)
 	size, _ := pwc.GetInt("size", 0)
-	if address == "" || strings.Index(address, conf.NewConfig().Public.Bech32PrefixValAddr) != 0 {
+	if address == "" || strings.Index(address, pwc.Base.Bech32PrefixValAddr) != 0 {
 		var err powerEventErrMsg
 		err.Data = nil
 		err.Msg = "Validator address is empty! Or error address!"
 		err.Code = "1"
 		pwc.Data["json"] = err
 	} else {
-		var txs models.Txs
+		//var txs model.Txs
 		// get data form mongodb
 		// type redelegate,delegate,unbonding ,validator's address == address ,
-		txList, total := txs.GetPowerEventInfo(address, page, size)
+		txList, total := pwc.Base.Transaction.GetPowerEventInfo(address, page, size)
+		//txList, total := txs.GetPowerEventInfo(address, page, size)
 		var pe powerEvents
 		var msg powerEventMsg
 		msg.Total = total
@@ -70,7 +72,7 @@ func (pwc *PowerEventController) Get() {
 	}
 	pwc.ServeJSON()
 }
-func getTxValidatorAmountAndSigns(address string, item models.Txs) (float64, int) {
+func getTxValidatorAmountAndSigns(address string, item model.Txs) (float64, int) {
 	var tempAmount float64
 	sing := 0
 	if item.Type == "unbonding" {

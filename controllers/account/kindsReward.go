@@ -1,16 +1,15 @@
-package accountDetails
+package account
 
 import (
+	"explorer/controllers"
 	"github.com/astaxie/beego"
 	"github.com/shopspring/decimal"
-	"conf"
-	"models"
-	"models/accountDetail"
 	"strings"
 )
 
 type KindsRewardController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 
 type KindsRewardErrMsg struct {
@@ -49,8 +48,7 @@ func (krc *KindsRewardController) Get() {
 	//Unbonding Sum http://172.38.8.89:1317/staking/delegators/hsn1aqwurs5jfu5z0z3k99tljt9csausdqrcaewjwv/unbonding_delegations
 	//Commission
 
-
-	if address == "" || strings.Index(address, conf.NewConfig().Public.Bech32PrefixAccAddr) != 0 || strings.Index(address, conf.NewConfig().Public.Bech32PrefixValAddr) == 0 {
+	if address == "" || strings.Index(address, krc.Base.Bech32PrefixAccAddr) != 0 || strings.Index(address, krc.Base.Bech32PrefixValAddr) == 0 {
 		var errMsg KindsRewardErrMsg
 		errMsg.Data = nil
 		errMsg.Code = "1"
@@ -59,10 +57,11 @@ func (krc *KindsRewardController) Get() {
 		krc.ServeJSON()
 	}
 
-	msg:= GetAllKindsAmount(address)
+	msg := krc.GetAllKindsAmount(address)
 	// 检查该地址是否是验证人的账户，如果是普通账户它的commission 等于nil
-	var valToDelMapping models.ValidatorAddressAndDelegatorAddress
-	validatorAddress, _ := valToDelMapping.CheckDelegatorAddress(address)
+	//var valToDelMapping model.ValidatorToDelegatorAddress
+	validatorAddress, _ := krc.Base.Validator.CheckDelegatorAddress(address)
+	//validatorAddress, _ := valToDelMapping.CheckDelegatorAddress(address)
 	if validatorAddress == "" {
 		msg.Data.Commission = nil
 	}
@@ -71,10 +70,10 @@ func (krc *KindsRewardController) Get() {
 	krc.Data["json"] = msg
 	krc.ServeJSON()
 }
-func getAvailableAmount(address string) []decimal.Decimal {
-	var account accountDetail.Account
+func (krc *KindsRewardController) getAvailableAmount(address string) []decimal.Decimal {
 	var availableAmount []decimal.Decimal
-	_, strAmount := account.GetInfo(address)
+	_, strAmount := krc.Base.Account.GetInfo(address)
+	//_, strAmount := account.GetInfo(address)
 	decimalAmount, _ := decimal.NewFromString(strAmount)
 	//, decimalPercentage
 	availableAmount = append(availableAmount, decimalAmount)
@@ -83,20 +82,22 @@ func getAvailableAmount(address string) []decimal.Decimal {
 
 // from LCD interface.
 //The amount is so large that there is a negative number in the results.
-func getReward(address string, ) []decimal.Decimal {
-	var delegateReward accountDetail.DelegateRewards
+func (krc *KindsRewardController) getReward(address string) []decimal.Decimal {
+	//var delegateReward model.DelegateRewards
 	var decimalAmount decimal.Decimal
 	var rewards []decimal.Decimal
-	amount := delegateReward.GetDelegateReward(address)
+	amount := krc.Base.Account.GetDelegateReward(address)
+	//amount := delegateReward.GetDelegateReward(address)
 	decimalAmount, _ = decimal.NewFromString(amount)
 	rewards = append(rewards, decimalAmount)
 	return rewards
 }
-func getTotalDelegateAmount(address string, ) []decimal.Decimal {
-	var delegators accountDetail.Delegators
+func (krc *KindsRewardController) getTotalDelegateAmount(address string) []decimal.Decimal {
+	//var delegators model.Delegators
 	var amount decimal.Decimal
 	var delegate []decimal.Decimal
-	infos := delegators.GetInfo(address)
+	infos := krc.Base.Account.GetDelegator(address)
+	//infos := delegators.GetInfo(address)
 	for _, item := range infos.Result {
 		decimalAmount, _ := decimal.NewFromString(item.Balance.Amount)
 		amount = amount.Add(decimalAmount)
@@ -104,11 +105,12 @@ func getTotalDelegateAmount(address string, ) []decimal.Decimal {
 	delegate = append(delegate, amount)
 	return delegate
 }
-func getTotalUnbondingAmount(address string, ) []decimal.Decimal {
-	var unbonding accountDetail.Unbonding
+func (krc *KindsRewardController) getTotalUnbondingAmount(address string, ) []decimal.Decimal {
+	//var unbonding accountDetail.Unbonding
 	var amount decimal.Decimal
 	var unbond []decimal.Decimal
-	infos := unbonding.GetInfo(address)
+	infos := krc.Base.Account.GetUnbonding(address)
+	//infos := unbonding.GetInfo(address)
 	for _, item := range infos.Result {
 		for _, entrie := range item.Entries {
 			decimalAmount, _ := decimal.NewFromString(entrie.Balance)
@@ -118,11 +120,12 @@ func getTotalUnbondingAmount(address string, ) []decimal.Decimal {
 	unbond = append(unbond, amount)
 	return unbond
 }
-func getTotalCommissionAmount(address string, ) []decimal.Decimal {
-	var txs models.Txs
+func (krc *KindsRewardController) getTotalCommissionAmount(address string, ) []decimal.Decimal {
+	//var txs models.Txs
 	var commission []decimal.Decimal
 	var decimalCommissionAmount decimal.Decimal
-	commissionTxs := txs.GetDelegatorCommissionTx(address)
+	commissionTxs := krc.Base.Transaction.GetDelegatorCommissionTx(address)
+	//commissionTxs := txs.GetDelegatorCommissionTx(address)
 	if len(*commissionTxs) == 0 {
 		decimalCommissionAmount, _ = decimal.NewFromString("0.0")
 	} else {
@@ -136,16 +139,16 @@ func getTotalCommissionAmount(address string, ) []decimal.Decimal {
 		}
 	}
 
-	commission = append(commission, decimalCommissionAmount, )
+	commission = append(commission, decimalCommissionAmount)
 	return commission
 }
-func GetAllKindsAmount(address string) (*KindsRewardMsg) {
+func (krc *KindsRewardController) GetAllKindsAmount(address string) *KindsRewardMsg {
 	var msg KindsRewardMsg
-	msg.Data.Reward = getReward(address)
-	msg.Data.Available = getAvailableAmount(address)
-	msg.Data.Delegated = getTotalDelegateAmount(address)
-	msg.Data.Unbonding = getTotalUnbondingAmount(address)
-	msg.Data.Commission = getTotalCommissionAmount(address)
+	msg.Data.Reward = krc.getReward(address)
+	msg.Data.Available = krc.getAvailableAmount(address)
+	msg.Data.Delegated = krc.getTotalDelegateAmount(address)
+	msg.Data.Unbonding = krc.getTotalUnbondingAmount(address)
+	msg.Data.Commission = krc.getTotalCommissionAmount(address)
 	var totalAmount []decimal.Decimal
 	var percentage decimal.Decimal
 	decimalAmount := (msg.Data.Available[0]).Add(msg.Data.Commission[0]).Add(msg.Data.Unbonding[0]).Add(msg.Data.Delegated[0]).Add(msg.Data.Reward[0])

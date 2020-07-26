@@ -1,4 +1,4 @@
-package accountDetail
+package account
 
 type Delegators struct {
 	Height string `json:"height"`

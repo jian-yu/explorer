@@ -49,7 +49,7 @@ func (b *block) GetAimHeightAndBlockHeight() (int, int) {
 	return lastBlockHeight, publicHeight
 }
 
-func (b *block)GetBlockListIfHasTx(height int) []model.BlocksHeights  {
+func (b *block) GetBlockListIfHasTx(height int) []model.BlocksHeights {
 	var heights []model.BlocksHeights
 	conn := b.MgoOperator.GetDBConn()
 	defer conn.Session.Close()

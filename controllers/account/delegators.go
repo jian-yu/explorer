@@ -1,14 +1,15 @@
-package accountDetails
+package account
 
 import (
+	"explorer/controllers"
+	"explorer/model"
 	"github.com/astaxie/beego"
-	"conf"
-	"models/accountDetail"
 	"strings"
 )
 
 type DeleatorsController struct {
 	beego.Controller
+	Base *controllers.BaseController
 }
 type DelegatorerrMsg struct {
 	Data error  `json:"data"`
@@ -16,11 +17,11 @@ type DelegatorerrMsg struct {
 	Code string `json:"code"`
 }
 type DelegatorMsg struct {
-	Data  accountDetail.Delegators `json:"data"`
-	Msg   string                   `json:"msg"`
-	Total int                      `json:"total"`
-	Size  int                      `json:"size"`
-	Code  string                   `json:"code"`
+	Data  model.DelegatorExtra `json:"data"`
+	Msg   string               `json:"msg"`
+	Total int                  `json:"total"`
+	Size  int                  `json:"size"`
+	Code  string               `json:"code"`
 }
 
 // @Title
@@ -34,7 +35,7 @@ func (dc *DeleatorsController) Get() {
 	page, _ := dc.GetInt("page", 0)
 	size, _ := dc.GetInt("size", 5)
 
-	if address == ""||  strings.Index(address,conf.NewConfig().Public.Bech32PrefixAccAddr)!=0 || strings.Index(address,conf.NewConfig().Public.Bech32PrefixValAddr)==0{
+	if address == "" || strings.Index(address, dc.Base.Bech32PrefixAccAddr) != 0 || strings.Index(address, dc.Base.Bech32PrefixValAddr) == 0 {
 		var msg baseInfoerrMsg
 		msg.Data = nil
 		msg.Msg = "Delegator address is empty Or Error address!"
@@ -43,8 +44,9 @@ func (dc *DeleatorsController) Get() {
 	} else {
 		//获取验证人账户信息和获取提款地址
 		var msg DelegatorMsg
-		var delegators accountDetail.Delegators
-		infos := delegators.GetInfo(address)
+		//var delegators model.DelegatorExtra
+		infos := dc.Base.Account.GetDelegator(address)
+		//infos := delegators.GetInfo(address)
 		msg.Code = "0"
 		msg.Size = size
 		msg.Total = len(infos.Result)
@@ -54,17 +56,14 @@ func (dc *DeleatorsController) Get() {
 
 		/*分页*/
 		msg.Data = *delegatorPagination(page, size, msg.Total, infos)
-		dc.Data["json"]=msg
-
-
-
+		dc.Data["json"] = msg
 	}
 	dc.ServeJSON()
 
 }
-func delegatorPagination(page, size, totalSize int, infos *accountDetail.Delegators) *accountDetail.Delegators {
-	//accountDetail.Unbonding
-	var tempVar accountDetail.Delegators
+func delegatorPagination(page, size, totalSize int, infos *model.DelegatorExtra) *model.DelegatorExtra {
+	//account.Unbonding
+	var tempVar model.DelegatorExtra
 
 	if page*size <= 0 {
 		//return first page
@@ -77,10 +76,10 @@ func delegatorPagination(page, size, totalSize int, infos *accountDetail.Delegat
 				tempVar.Result = append(tempVar.Result, infos.Result[i])
 			}
 		}
-	 return &tempVar
+		return &tempVar
 	}
 	if page*size > 0 && (page+1)*size <= totalSize {
-		for i := (page * size); i < (page+1)*size; i++ {
+		for i := page * size; i < (page+1)*size; i++ {
 			tempVar.Result = append(tempVar.Result, infos.Result[i])
 		}
 		return &tempVar

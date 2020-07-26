@@ -1,4 +1,4 @@
-package accountDetail
+package account
 
 
 type DelegateRewards struct {
