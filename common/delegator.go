@@ -3,8 +3,9 @@ package common
 import (
 	"explorer/db"
 	"explorer/model"
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type delegator struct {

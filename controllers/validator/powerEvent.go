@@ -3,8 +3,9 @@ package validator
 import (
 	"explorer/controllers"
 	"explorer/model"
-	"github.com/astaxie/beego"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type PowerEventController struct {
@@ -85,7 +86,7 @@ func getTxValidatorAmountAndSigns(address string, item model.Txs) (float64, int)
 		tempAmount = 0.0
 		return tempAmount, sing
 	}
-	for i, _ := range item.ValidatorAddress {
+	for i := range item.ValidatorAddress {
 		tempAmount = tempAmount + item.Amount[i]
 	}
 	return tempAmount, sing

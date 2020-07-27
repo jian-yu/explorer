@@ -2,12 +2,13 @@ package actions
 
 import (
 	"explorer/model"
+	"strconv"
+	"time"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/mgo.v2/bson"
-	"strconv"
-	"time"
 )
 
 // get txs list from the listed urls
@@ -23,57 +24,59 @@ import (
 func (a *action) GetTxs() {
 
 	var Lcd = a.LcdURL
-	var SendUrl = Lcd + "/txs?message.action=send"
-	var DelegateUrl = Lcd + "/txs?message.action=delegate"
-	var VoteUrl = Lcd + "/txs?message.action=vote"
-	var UnDelegateUrl = Lcd + "/txs?message.action=begin_unbonding"
-	var RewardUrl = Lcd + "/txs?message.action=withdraw_delegator_reward"
-	var RewardCommissionUrl = Lcd + "/txs?message.action=withdraw_validator_commission"
-	var MultiSendUrl = Lcd + "/txs?message.action=multisend"
-	var ReDelegateUrl = Lcd + "/txs?message.action=begin_redelegate"
-	var CreateValidatorUrl = Lcd + "/txs?message.action=create_validator"
-	var EditValidatorUrl = Lcd + "/txs?message.action=edit_validator"
-	var EditAddressUrl = Lcd + "/txs?message.action=set_withdraw_address"
-	var SubmitProposalUrl = Lcd + "/txs?message.action=submit_proposal"
-	var DepositUrl = Lcd + "/txs?message.action=deposit"
+	var SendURL = Lcd + "/txs?message.action=send"
+	var DelegateURL = Lcd + "/txs?message.action=delegate"
+	var VoteURL = Lcd + "/txs?message.action=vote"
+	var UnDelegateURL = Lcd + "/txs?message.action=begin_unbonding"
+	var RewardURL = Lcd + "/txs?message.action=withdraw_delegator_reward"
+	var RewardCommissionURL = Lcd + "/txs?message.action=withdraw_validator_commission"
+	var MultiSendURL = Lcd + "/txs?message.action=multisend"
+	var ReDelegateURL = Lcd + "/txs?message.action=begin_redelegate"
+	var CreateValidatorURL = Lcd + "/txs?message.action=create_validator"
+	var EditValidatorURL = Lcd + "/txs?message.action=edit_validator"
+	var EditAddressURL = Lcd + "/txs?message.action=set_withdraw_address"
+	var SubmitProposalURL = Lcd + "/txs?message.action=submit_proposal"
+	var DepositURL = Lcd + "/txs?message.action=deposit"
 	//get the transaction judge whether it is stored in the database
 	for {
-		a.getTxs(SendUrl, a.ChainName, "send")
-		a.getTxs(DelegateUrl, a.ChainName, "delegate")
-		a.getTxs(RewardCommissionUrl, a.ChainName, "commission")
-		a.getTxs(RewardUrl, a.ChainName, "reward")
-		a.getTxs(VoteUrl, a.ChainName, "vote")
-		a.getTxs(UnDelegateUrl, a.ChainName, "unbonding")
-		a.getTxs(MultiSendUrl, a.ChainName, "multisend")
-		a.getTxs(ReDelegateUrl, a.ChainName, "redelegate")
-		a.getTxs(CreateValidatorUrl, a.ChainName, "createValidator")
-		a.getTxs(EditValidatorUrl, a.ChainName, "editValidator")
-		a.getTxs(EditAddressUrl, a.ChainName, "editAddress")
-		a.getTxs(SubmitProposalUrl, a.ChainName, "submitProposal")
-		a.getTxs(DepositUrl, a.ChainName, "deposit")
+		a.getTxs(SendURL, a.ChainName, "send")
+		a.getTxs(DelegateURL, a.ChainName, "delegate")
+		a.getTxs(RewardCommissionURL, a.ChainName, "commission")
+		a.getTxs(RewardURL, a.ChainName, "reward")
+		a.getTxs(VoteURL, a.ChainName, "vote")
+		a.getTxs(UnDelegateURL, a.ChainName, "unbonding")
+		a.getTxs(MultiSendURL, a.ChainName, "multisend")
+		a.getTxs(ReDelegateURL, a.ChainName, "redelegate")
+		a.getTxs(CreateValidatorURL, a.ChainName, "createValidator")
+		a.getTxs(EditValidatorURL, a.ChainName, "editValidator")
+		a.getTxs(EditAddressURL, a.ChainName, "editAddress")
+		a.getTxs(SubmitProposalURL, a.ChainName, "submitProposal")
+		a.getTxs(DepositURL, a.ChainName, "deposit")
 		time.Sleep(time.Second * 4) //Avoid frequent request api
 	}
 
 }
-func (a *action)getTxs(url string, chainName string, types string) {
-	var httpcli = resty.New()
+func (a *action) getTxs(url string, chainName string, types string) {
 	page := a.getPage(types)
 	if page == 0 {
 		page = 1
 	}
 	for {
-		tempUrl := url
-		url := tempUrl + "&page=" + strconv.Itoa(page)
+		tempURL := url
+		url := tempURL + "&page=" + strconv.Itoa(page)
 
-		rsp,err := httpcli.R().Get(url)
-
+		httpCli := resty.New()
+		rsp, err := httpCli.R().Get(url)
 		if err != nil {
-			log.Err(err).Interface(`url`,url).Msg(`getTxs`)
+			log.Err(err).Interface(`url`, url).Msg(`getTxs`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 		var txsInfo model.Txs
-		jsonObj, _ := simplejson.NewFromReader(rsp.RawBody())
+		jsonObj, err := simplejson.NewJson(rsp.Body())
+		if err != nil {
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
+		}
 		jsonTxs, _ := jsonObj.Get("txs").Array()
 		txsError, _ := jsonObj.Get("error").String()
 		if txsError != "" {
@@ -121,8 +124,9 @@ func (a *action)getTxs(url string, chainName string, types string) {
 
 						amount, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("amount").Array()
 						for index := 0; index < len(amount); index++ {
-							demo, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("amount").GetIndex(index).Get("denom").String()
-							if demo == chainName {
+							denom, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("amount").GetIndex(index).Get("denom").String()
+							log.Debug().Interface(`denom`, denom).Interface(`chainName`, chainName).Msg(`getTxs2`)
+							if denom == chainName {
 								strAmount, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("amount").GetIndex(index).Get("amount").String()
 								floatAmount, _ := strconv.ParseFloat(strAmount, 64)
 								realAmount = append(realAmount, floatAmount)
@@ -201,7 +205,7 @@ func (a *action)getTxs(url string, chainName string, types string) {
 									amountValue, _ := jsonObj.Get("txs").GetIndex(i).Get("events").GetIndex(iEvent).Get("attributes").GetIndex(iAttributes).Get("value").String()
 									lenChanName := len(chainName)
 									//need to fix bug ,
-									if len(amountValue) > lenChanName && amountValue[len(amountValue)-lenChanName:len(amountValue)] == chainName && key == "amount" {
+									if len(amountValue) > lenChanName && amountValue[len(amountValue)-lenChanName:] == chainName && key == "amount" {
 										floatAmout, _ := strconv.ParseFloat(amountValue[0:len(amountValue)-lenChanName], 64)
 										withDrawRewardAmout = append(withDrawRewardAmout, floatAmout)
 									}
@@ -325,11 +329,12 @@ func (a *action)getTxs(url string, chainName string, types string) {
 			}
 		}
 		page++
+		time.Sleep(time.Second * 2)
 	}
 
 }
 
-func (a *action)getPage(types string) int {
+func (a *action) getPage(types string) int {
 	var txsInfo model.Txs
 
 	conn := a.MgoOperator.GetDBConn()

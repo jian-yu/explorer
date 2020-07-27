@@ -2,9 +2,10 @@ package account
 
 import (
 	"explorer/controllers"
+	"strings"
+
 	"github.com/astaxie/beego"
 	"github.com/shopspring/decimal"
-	"strings"
 )
 
 type KindsRewardController struct {
@@ -105,7 +106,7 @@ func (krc *KindsRewardController) getTotalDelegateAmount(address string) []decim
 	delegate = append(delegate, amount)
 	return delegate
 }
-func (krc *KindsRewardController) getTotalUnbondingAmount(address string, ) []decimal.Decimal {
+func (krc *KindsRewardController) getTotalUnbondingAmount(address string) []decimal.Decimal {
 	//var unbonding accountDetail.Unbonding
 	var amount decimal.Decimal
 	var unbond []decimal.Decimal
@@ -120,7 +121,7 @@ func (krc *KindsRewardController) getTotalUnbondingAmount(address string, ) []de
 	unbond = append(unbond, amount)
 	return unbond
 }
-func (krc *KindsRewardController) getTotalCommissionAmount(address string, ) []decimal.Decimal {
+func (krc *KindsRewardController) getTotalCommissionAmount(address string) []decimal.Decimal {
 	//var txs models.Txs
 	var commission []decimal.Decimal
 	var decimalCommissionAmount decimal.Decimal

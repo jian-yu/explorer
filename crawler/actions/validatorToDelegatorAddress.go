@@ -3,6 +3,8 @@ package actions
 import (
 	"encoding/json"
 	"explorer/model"
+
+	"github.com/rs/zerolog/log"
 )
 
 func (a *action) SetValidatorDelegatorAddress() {
@@ -12,13 +14,13 @@ func (a *action) SetValidatorDelegatorAddress() {
 
 	rsp, err := a.R().Get(genesisAddress)
 	if err != nil {
-		logger.Err(err).Interface(`url`, genesisAddress).Msg(`SetValidatorDelegatorAddress`)
+		log.Err(err).Interface(`url`, genesisAddress).Msg(`SetValidatorDelegatorAddress`)
 		return
 	}
 
 	err = json.Unmarshal(rsp.Body(), &genesisValidator)
 	if err != nil {
-		logger.Err(err).Interface(`rsp`, rsp).Msg(`SetValidatorDelegatorAddress`)
+		log.Err(err).Interface(`rsp`, rsp).Msg(`SetValidatorDelegatorAddress`)
 		return
 	}
 

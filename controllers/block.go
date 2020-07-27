@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"explorer/model"
+
 	"github.com/astaxie/beego"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -59,22 +60,22 @@ func (bc *BlockController) Get() {
 
 	var blocks = make([]model.BlockInfo, size)
 	var blockInfoSimples = make([]BlockSimple, size)
-	var respJson Blocks
+	var respJSON Blocks
 	_ = conn.C("block").Find(bson.M{"intheight": bson.M{
-		"$lte": head,}}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
+		"$lte": head}}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
 	for i, item := range blocks {
 		blockInfoSimples[i].Height = item.IntHeight
-		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockId.Hash
+		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockID.Hash
 		blockInfoSimples[i].Proposer = bc.getProposerAddress(item.Block.Header.ProposerAddress)
 		blockInfoSimples[i].AKA = bc.getAKAName(blockInfoSimples[i].Proposer)
 		blockInfoSimples[i].Txs = item.Block.Header.NumTxs
 		blockInfoSimples[i].Time = item.Block.Header.Time
 	}
-	respJson.Total = public.Height
-	respJson.Data = blockInfoSimples
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	bc.Data["json"] = respJson
+	respJSON.Total = public.Height
+	respJSON.Data = blockInfoSimples
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	bc.Data["json"] = respJSON
 	bc.ServeJSON()
 }
 func (bc *BlockController) getProposerAddress(hashAddress string) string {

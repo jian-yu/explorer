@@ -4,6 +4,7 @@ import (
 	"explorer/common"
 	"explorer/crawler/actions"
 	"explorer/db"
+
 	"github.com/spf13/viper"
 )
 
@@ -14,13 +15,13 @@ type Crawler interface {
 
 type crawler struct {
 	LcdURL       string
-	RpcURL       string
+	RPCURL       string
 	ChainName    string
 	Denom        string
 	CoinPriceURL string
 	VSetCap      int
-	GenesisAddr string
-	VotingPower float64
+	GenesisAddr  string
+	VotingPower  float64
 
 	db.MgoOperator
 	common.Validator
@@ -39,13 +40,13 @@ func New(m db.MgoOperator) Crawler {
 
 	return &crawler{
 		LcdURL:       lcdURL,
-		RpcURL:       rpcURL,
+		RPCURL:       rpcURL,
 		VSetCap:      vSetCap,
 		ChainName:    chainName,
 		CoinPriceURL: coinPriceURL,
 		Denom:        denom,
-		GenesisAddr: genesisAddr,
-		VotingPower: votingPower,
+		GenesisAddr:  genesisAddr,
+		VotingPower:  votingPower,
 		MgoOperator:  m,
 	}
 }
@@ -55,14 +56,14 @@ func (c *crawler) Run() {
 	act := actions.NewAction(
 		c.MgoOperator,
 		c.LcdURL,
-		c.RpcURL,
+		c.RPCURL,
 		c.ChainName,
 		c.Denom,
 		c.CoinPriceURL,
 		c.VSetCap,
 		c.VotingPower,
 		c.GenesisAddr,
-		)
+	)
 
 	go act.GetPublic()
 	go act.GetBlock()

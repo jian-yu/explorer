@@ -3,6 +3,7 @@ package common
 import (
 	"explorer/db"
 	"explorer/model"
+
 	"github.com/rs/zerolog/log"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -112,7 +113,7 @@ func (v *validator) Check(address string) (int, string) {
 	conn := v.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
-	conn.C("mapping").Find(bson.M{"validatoraddress": address}).One(&tempValue)
+	_ = conn.C("mapping").Find(bson.M{"validatoraddress": address}).One(&tempValue)
 	if tempValue.DelegatorAddress != "" {
 		count = 1
 	}

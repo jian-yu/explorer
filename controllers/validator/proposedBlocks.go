@@ -3,9 +3,10 @@ package validator
 import (
 	"explorer/controllers"
 	"explorer/model"
+	"strings"
+
 	"github.com/astaxie/beego"
 	"gopkg.in/mgo.v2/bson"
-	"strings"
 )
 
 type ProposedBlocksController struct {
@@ -69,7 +70,7 @@ func (pbc *ProposedBlocksController) Get() {
 
 	var blocks = make([]model.BlockInfo, size)
 	var blockInfoSimples = make([]BlockSimple, size)
-	var respJson msgs
+	var respJSON msgs
 	//var validatorAddress model.ValidatorAddressAndKey
 	hashAddress := pbc.Base.Proposer.GetInfo(address)
 	//hashAddress := validatorAddress.GetInfo(address)
@@ -78,15 +79,15 @@ func (pbc *ProposedBlocksController) Get() {
 			"intheight": bson.M{"$lte": head}, "block.header.proposeraddress": hashAddress}).Sort("-intheight").Limit(size).Skip(size * page).All(&blocks)
 	for i, item := range blocks {
 		blockInfoSimples[i].Height = item.IntHeight
-		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockId.Hash
+		blockInfoSimples[i].BlockHash = item.BlockMeta.BlockID.Hash
 		blockInfoSimples[i].Proposer = item.Block.Header.ProposerAddress
 		blockInfoSimples[i].Txs = item.Block.Header.NumTxs
 		blockInfoSimples[i].Time = item.Block.Header.Time
 	}
-	respJson.Total, _ = conn.C("block").Find(bson.M{"block.header.proposeraddress": hashAddress}).Count()
-	respJson.Data = blockInfoSimples
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	pbc.Data["json"] = respJson
+	respJSON.Total, _ = conn.C("block").Find(bson.M{"block.header.proposeraddress": hashAddress}).Count()
+	respJSON.Data = blockInfoSimples
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	pbc.Data["json"] = respJSON
 	pbc.ServeJSON()
 }

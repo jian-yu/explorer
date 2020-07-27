@@ -48,5 +48,3 @@ type ValidatorInfo struct {
 	Uptime     int       `json:"uptime"`
 	Time       time.Time `json:"time"`
 }
-
-

@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"explorer/model"
-	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 func (a *action) MakeBaseInfo(item model.Result, VS *[]model.ValidatorSet) {
@@ -55,7 +58,7 @@ func (a *action) GetDelegations() {
 			time.Sleep(time.Second * 4)
 			errorCount++
 			if errorCount >= 5 {
-				logger.Err(errors.New(`get validator error`)).Interface(`vaList`, vaList).Msg(`GetDelegations`)
+				log.Err(errors.New(`get validator error`)).Interface(`vaList`, vaList).Msg(`GetDelegations`)
 				time.Sleep(time.Second * 4 * 2)
 			}
 			continue
@@ -67,28 +70,29 @@ func (a *action) GetDelegations() {
 		for _, item := range *vaList {
 			address := item.ValidatorAddress
 			url := a.LcdURL + "/staking/validators/" + address + "/delegations"
-
+			//log.Debug().Interface(`url`,url).Msg(`GetDelegations`)
 			rsp, err := a.R().Get(url)
 			if err != nil {
-				logger.Err(err).Interface(`url`, url).Msg(`GetDelegations`)
+				log.Err(err).Interface(`url`, url).Msg(`GetDelegations`)
 				time.Sleep(time.Second * 4)
 				continue
 			}
 
 			err = json.Unmarshal(rsp.Body(), &delegations)
 			if err != nil {
-				logger.Err(err).Interface(`rsp`, rsp).Msg(`GetDelegations`)
+				log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetDelegations`)
 				time.Sleep(time.Second * 4)
 				continue
 			}
 
 			for _, item := range delegations.Result {
-				delegationObj.Shares, _ = strconv.ParseFloat(item.Balance.Amount, 64)
+				delegationObj.Shares, _ = strconv.ParseFloat(item.Balance, 64)
+				//delegationObj.Shares, _ = strconv.ParseFloat(item.Balance.Amount, 64)
 				delegationObj.DelegatorAddress = item.DelegatorAddress
 				delegationObj.Address = item.ValidatorAddress
 				delegationObj.Sign = sign
 				delegationObj.Time = time.Now()
-				a.Delegator.SetDelegatorObj(delegationObj)
+				a.Delegator.SetInfo(delegationObj)
 			}
 
 		}
@@ -116,7 +120,7 @@ func (a *action) GetDelegatorNums() {
 	}
 }
 
-func (a *action)updateInsertDelegatorData() error {
+func (a *action) updateInsertDelegatorData() error {
 
 	var delegations model.Delegators
 	var validatorDelegationNums model.ValidatorDelegatorNums
@@ -133,14 +137,14 @@ func (a *action)updateInsertDelegatorData() error {
 
 		rsp, err := a.R().Get(url)
 		if err != nil {
-			logger.Err(err).Interface(`url`, url).Msg(`updateInsertDelegatorData`)
+			log.Err(err).Interface(`url`, url).Msg(`updateInsertDelegatorData`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 
 		err = json.Unmarshal(rsp.Body(), &delegations)
 		if err != nil {
-			logger.Err(err).Interface(`rsp`, rsp).Msg(`updateInsertDelegatorData`)
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`updateInsertDelegatorData`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
@@ -179,19 +183,24 @@ func (a *action) getSelfToken(validatorAddress string, accountAddress string) st
 	//http://172.38.8.89:1317/hsn1zqxayv6qe50w6h3ynfj6tq9pr09r7rtuq565clhsnvaloper1zqxayv6qe50w6h3ynfj6tq9pr09r7rtu4u3wgp
 	var delegator model.Delegator
 
+	if accountAddress == "" {
+		return ""
+	}
+
 	url := a.LcdURL + "/staking/delegators/" + accountAddress + "/delegations/" + validatorAddress
 	rsp, err := a.R().Get(url)
 	if err != nil {
-		logger.Err(err).Interface(`url`, url).Msg(`getSelfToken`)
+		log.Err(err).Interface(`url`, url).Msg(`getSelfToken`)
 		return ""
 	}
 
 	err = json.Unmarshal(rsp.Body(), &delegator)
 	if err != nil {
-		logger.Err(err).Interface(`rsp`, rsp).Msg(`getSelfToken`)
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getSelfToken`)
 		return ""
 	}
-	return delegator.Result.Balance.Amount
+	return delegator.Result.Balance
+	//return delegator.Result.Balance.Amount
 }
 
 func (a *action) getHeight(pubkey string) string {

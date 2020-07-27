@@ -7,20 +7,21 @@ import (
 type Delegators struct {
 	Address string    `json:"address"`
 	Height  string    `json:"height"`
-	Result  []DResult  `json:"result"`
+	Result  []DResult `json:"result"`
 	Time    time.Time `json:"time"`
 }
 
 type DResult struct {
-	DelegatorAddress string  `json:"delegator_address"`
-	ValidatorAddress string  `json:"validator_address"`
-	Shares           string  `json:"shares"`
-	Balance          Balance `json:"balance"`
+	DelegatorAddress string `json:"delegator_address"`
+	ValidatorAddress string `json:"validator_address"`
+	Shares           string `json:"shares"`
+	Balance          string `json:"balance"`
 }
-type Balance struct {
-	Denom  string `json:"denom"`
-	Amount string `json:"amount"`
-}
+
+//type Balance struct {
+//	Denom  string `json:"denom"`
+//	Amount string `json:"amount"`
+//}
 type DelegatorObj struct {
 	Address          string    `json:"address"`
 	Height           string    `json:"height"`
@@ -61,7 +62,6 @@ type DelegatorValidatorReward struct {
 	} `json:"result"`
 }
 
-
 type DelegateRewards struct {
 	Result struct {
 		Total []struct {
@@ -70,7 +70,6 @@ type DelegateRewards struct {
 		} `json:"total"`
 	} `json:"result"`
 }
-
 
 type Unbonding struct {
 	Height string `json:"height"`
@@ -86,7 +85,6 @@ type Unbonding struct {
 		Name string `json:"name"`
 	} `json:"result"`
 }
-
 
 //func (d *DelegatorObj) GetInfo(address string, page int, size int) (*[]DelegatorObj, int) {
 //

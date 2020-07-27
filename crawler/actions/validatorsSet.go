@@ -5,6 +5,8 @@ import (
 	"explorer/model"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type validatorsSets struct {
@@ -30,14 +32,15 @@ func (a *action) GetValidatorsSet() {
 			for aimHeight > ValidatorSetHeight {
 				ValidatorSetHeight = ValidatorSetHeight + 1
 
-				rsp, err := a.R().Get(url)
+				rsp, err := a.R().Get(url + strconv.Itoa(ValidatorSetHeight))
 				if err != nil {
-					logger.Err(err).Interface(`url`,url).Msg(`GetValidatorsSet`)
+					log.Err(err).Interface(`url`, url).Msg(`GetValidatorsSet`)
 					continue
 				}
 
 				err = json.Unmarshal(rsp.Body(), &sets)
 				if err != nil {
+					log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetValidatorsSet`)
 					intHeight, _ := strconv.Atoi(sets.Result.BlockHeight)
 					sets.Result.Height = intHeight
 					sets.Result.Time = time.Now()
@@ -54,7 +57,6 @@ func (a *action) GetHeight() (int, int) {
 	// get public's Height,ValidatorsSet's Height
 	conn := a.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
-
 
 	var tempValidatorsSet model.ValidatorSet
 	_ = conn.C("validatorsSet").Find(nil).Sort("-height").One(&tempValidatorsSet)

@@ -34,7 +34,7 @@ type TxBlocks struct {
 func (txs *TxsController) Get() {
 	txs.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", txs.Ctx.Request.Header.Get("Origin"))
 	//var txList model.Txs
-	var respJson TxBlocks
+	var respJSON TxBlocks
 	head, _ := txs.GetInt("head")
 	page, _ := txs.GetInt("page")
 	size, _ := txs.GetInt("size")
@@ -59,22 +59,22 @@ func (txs *TxsController) Get() {
 		}
 
 	}
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	respJson.Data = txsSet
-	respJson.Total = total
-	txs.Data["json"] = respJson
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	respJSON.Data = txsSet
+	respJSON.Total = total
+	txs.Data["json"] = respJSON
 	txs.ServeJSON()
 }
 func getAmount(amounts []float64) float64 {
 	var totalAmout float64
 	if len(amounts) <= 0 {
 		return 0.0
-	} else {
-		for i := 0; i < len(amounts); i++ {
-			totalAmout = totalAmout + amounts[i]
-		}
 	}
+	for i := 0; i < len(amounts); i++ {
+		totalAmout = totalAmout + amounts[i]
+	}
+
 	return totalAmout
 }
 

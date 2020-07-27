@@ -16,6 +16,7 @@ type Unbonding struct {
 		Name string `json:"name"`
 	} `json:"result"`
 }
+
 //
 //func (u *Unbonding) GetInfo(address string) *Unbonding {
 //

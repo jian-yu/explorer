@@ -1,11 +1,15 @@
 package actions
 
 import (
+	"errors"
 	"explorer/model"
-	"github.com/bitly/go-simplejson"
-	"github.com/go-resty/resty/v2"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/bitly/go-simplejson"
+	"github.com/go-resty/resty/v2"
 )
 
 // get txs list from the listed urls
@@ -50,18 +54,22 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 	var txsInfo model.Txs
 
 	msgsType := ""
-	tempUrl := lcdURL + "/txs?tx.height="
+	tempURL := lcdURL + "/txs?tx.height="
 	strHeight := strconv.Itoa(height)
 
-	url := tempUrl + strHeight
+	url := tempURL + strHeight
 	rsp, err := httpCli.R().Get(url)
 	if err != nil {
 		return err
 	}
-	jsonObj, _ := simplejson.NewFromReader(rsp.RawBody())
+	jsonObj, err := simplejson.NewJson(rsp.Body())
+	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
+	}
 	jsonTxs, _ := jsonObj.Get("txs").Array()
 	txsError, _ := jsonObj.Get("error").String()
 	if txsError != "" {
+		log.Err(errors.New(txsError)).Msg(`getTxs2`)
 	}
 
 	lenTxs := len(jsonTxs)
@@ -128,6 +136,7 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 						coinArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("inputs").GetIndex(index2).Get("coins").Array()
 						for innerIndex := 0; innerIndex < len(coinArray); innerIndex++ {
 							denom, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("inputs").GetIndex(index2).Get("coins").GetIndex(innerIndex).Get("denom").String()
+							log.Debug().Interface(`denom`, denom).Interface(`chainName`, chainName).Msg(`getTxs2`)
 							if denom == chainName {
 								strAmount, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("inputs").GetIndex(index2).Get("coins").GetIndex(innerIndex).Get("amount").String()
 								floatAmount, _ := strconv.ParseFloat(strAmount, 64)

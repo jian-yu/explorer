@@ -3,8 +3,9 @@ package validator
 import (
 	"explorer/controllers"
 	"explorer/model"
-	"github.com/astaxie/beego"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type DelegationsController struct {
@@ -54,9 +55,9 @@ func (dc *DelegationsController) Get() {
 		dc.ServeJSON()
 	}
 	var msg Msgs
-	var respJson DelegationMsg
-	var respJsonDelegations []Delegations
-	var respJsonDelegation Delegations
+	var respJSON DelegationMsg
+	var respJSONDelegations []Delegations
+	var respJSONDelegation Delegations
 	//var delegations model.DelegatorObj
 	//var baseInfo model.ExtraValidatorInfo
 	//var validatorDelegationNums model.ValidatorDelegatorNums
@@ -69,15 +70,15 @@ func (dc *DelegationsController) Get() {
 	oneDayAgoDelegations := dc.Base.Delegator.GetDelegatorCount(address)
 	//oneDayAgoDelegations := validatorDelegationNums.GetInfo(address)
 	for _, item := range *items {
-		respJsonDelegation.Amount = getShares(items, item.DelegatorAddress)
-		respJsonDelegation.Address = item.DelegatorAddress
-		respJsonDelegation.AmountPercentage = getPercentage(respJsonDelegation.Amount, validatorBaseInfo.TotalToken)
-		respJsonDelegations = append(respJsonDelegations, respJsonDelegation)
+		respJSONDelegation.Amount = getShares(items, item.DelegatorAddress)
+		respJSONDelegation.Address = item.DelegatorAddress
+		respJSONDelegation.AmountPercentage = getPercentage(respJSONDelegation.Amount, validatorBaseInfo.TotalToken)
+		respJSONDelegations = append(respJSONDelegations, respJSONDelegation)
 	}
-	respJson.TotalDelegations = totalDelegations
-	respJson.OneDayAgoDelegations = totalDelegations - oneDayAgoDelegations
-	respJson.Delegations = respJsonDelegations
-	msg.Data = respJson
+	respJSON.TotalDelegations = totalDelegations
+	respJSON.OneDayAgoDelegations = totalDelegations - oneDayAgoDelegations
+	respJSON.Delegations = respJSONDelegations
+	msg.Data = respJSON
 	msg.Code = "0"
 	msg.Msg = "OK"
 	dc.Data["json"] = msg

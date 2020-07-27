@@ -3,9 +3,10 @@ package account
 import (
 	"explorer/controllers"
 	"explorer/model"
+	"strings"
+
 	"github.com/astaxie/beego"
 	"github.com/shopspring/decimal"
-	"strings"
 )
 
 type BaseInfoController struct {

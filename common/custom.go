@@ -3,8 +3,9 @@ package common
 import (
 	"explorer/db"
 	"explorer/model"
-	"github.com/shopspring/decimal"
 	"strconv"
+
+	"github.com/shopspring/decimal"
 )
 
 type custom struct {

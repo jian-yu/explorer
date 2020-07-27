@@ -7,7 +7,7 @@ type BlockInfo struct {
 }
 
 type BlockMeta struct {
-	BlockId BlockId `json:"block_id"`
+	BlockID BlockID `json:"block_id"`
 }
 type Block struct {
 	Header Header `json:"header"`
@@ -16,7 +16,7 @@ type Block struct {
 	//LastCommit LastCommit `json:"last_commit"`
 }
 
-type BlockId struct {
+type BlockID struct {
 	Hash string `json:"hash"`
 	//Parts Parts  `json:"parts"`
 }
@@ -32,7 +32,7 @@ type Header struct {
 	Time        string  `json:"time"` //p
 	NumTxs      string  `json:"num_txs"`
 	TotalTxs    string  `json:"total_txs"`
-	LastBlockId BlockId `json:"last_block_id"`
+	LastBlockID BlockID `json:"last_block_id"`
 	//LastCommitHash     string  `json:"last_commit_hash"`
 	//DataHash           string  `json:"data_hash"`
 	ValidatorsHash string `json:"validators_hash"`
@@ -56,7 +56,7 @@ type Evidence struct {
 	Evidence string `json:"evidence"`
 }
 type LastCommit struct {
-	BlockId    BlockId          `json:"block_id"`
+	BlockID    BlockID          `json:"block_id"`
 	Precommits []PreCommitsList `json:"precommits"`
 }
 
@@ -64,7 +64,7 @@ type PreCommitsList struct {
 	Type             int     `json:"type"`
 	Height           string  `json:"height"`
 	Round            string  `json:"round"`
-	BlockID          BlockId `json:"block_id"`
+	BlockID          BlockID `json:"block_id"`
 	Timestamp        string  `json:"timestamp"`
 	ValidatorAddress string  `json:"validator_address"`
 	ValidatorIndex   string  `json:"validator_index"`

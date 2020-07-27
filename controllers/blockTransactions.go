@@ -16,7 +16,7 @@ type BlockTxController struct {
 // @router /
 func (btc *BlockTxController) Get() {
 	btc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", btc.Ctx.Request.Header.Get("Origin"))
-	var respJson TxBlocks
+	var respJSON TxBlocks
 	head, _ := btc.GetInt("head")
 	page, _ := btc.GetInt("page")
 	size, _ := btc.GetInt("size")
@@ -41,10 +41,10 @@ func (btc *BlockTxController) Get() {
 		}
 
 	}
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	respJson.Data = txsSet
-	respJson.Total = total
-	btc.Data["json"] = respJson
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	respJSON.Data = txsSet
+	respJSON.Total = total
+	btc.Data["json"] = respJSON
 	btc.ServeJSON()
 }

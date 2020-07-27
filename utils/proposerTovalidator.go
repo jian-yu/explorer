@@ -3,10 +3,10 @@ package utils
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"golang.org/x/crypto/ripemd160"
 	"strings"
+
 )
 
 // GenHexAddrFromPubKey - get hex address from validator conspubkey
@@ -25,7 +25,7 @@ func GenHexAddrFromPubKey(bech32Pubkey string) string {
 func convertAndEncode(hrp string, data []byte) (string, error) {
 	converted, err := convertBits(data, 8, 5, true)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("%s encoding bech32 failed", err.Error()))
+		return "", fmt.Errorf("%s encoding bech32 failed", err.Error())
 	}
 	return encode(hrp, converted)
 
@@ -35,11 +35,11 @@ func convertAndEncode(hrp string, data []byte) (string, error) {
 func DecodeAndConvert(bech string) (string, []byte, error) {
 	hrp, data, err := decode(bech)
 	if err != nil {
-		return "", nil, errors.New(fmt.Sprintf("%s decoding bech32 failed", err.Error()))
+		return "", nil, fmt.Errorf("%s decoding bech32 failed", err.Error())
 	}
 	converted, err := convertBits(data, 5, 8, false)
 	if err != nil {
-		return "", nil, errors.New(fmt.Sprintf("%s decoding bech32 failed", err.Error()))
+		return "", nil, fmt.Errorf("%s decoding bech32 failed", err.Error())
 	}
 	return hrp, converted, nil
 }

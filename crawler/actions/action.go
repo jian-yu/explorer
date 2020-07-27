@@ -1,26 +1,27 @@
 package actions
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"explorer/common"
 	"explorer/db"
 	"explorer/model"
 	"explorer/utils"
-	"github.com/go-resty/resty/v2"
-	"github.com/rs/zerolog/log"
-	"github.com/shopspring/decimal"
 	"strconv"
 	"time"
-)
 
-var logger = log.With().Logger()
+	"github.com/rs/zerolog/log"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/shopspring/decimal"
+)
 
 var tokenPrice string
 var fiveMinAgo time.Time
 
 type action struct {
 	LcdURL            string
-	RpcURL            string
+	RPCURL            string
 	ChainName         string
 	Denom             string
 	CoinPriceURL      string
@@ -41,7 +42,7 @@ type action struct {
 
 func NewAction(
 	m db.MgoOperator,
-	lcdUrl string,
+	lcdURL string,
 	rcpURL string,
 	chainName string,
 	denom string,
@@ -61,8 +62,8 @@ func NewAction(
 
 	return &action{
 		MgoOperator:       m,
-		LcdURL:            lcdUrl,
-		RpcURL:            rcpURL,
+		LcdURL:            lcdURL,
+		RPCURL:            rcpURL,
 		ChainName:         chainName,
 		Denom:             denom,
 		CoinPriceURL:      coinPriceURL,
@@ -116,10 +117,10 @@ type Price struct {
 func (a *action) getBLockTime(height int) (float64, error) {
 	var block model.BlockInfo
 
-	lastHeightUrl := a.LcdURL + "/blocks/" + strconv.Itoa(height)
-	aheadHeightUrl := a.LcdURL + "/blocks/" + strconv.Itoa(height-1)
+	lastHeightURL := a.LcdURL + "/blocks/" + strconv.Itoa(height)
+	aheadHeightURL := a.LcdURL + "/blocks/" + strconv.Itoa(height-1)
 
-	rsp, err := a.Client.R().Get(lastHeightUrl)
+	rsp, err := a.Client.R().Get(lastHeightURL)
 	if err != nil {
 		return 0.0, err
 	}
@@ -130,7 +131,7 @@ func (a *action) getBLockTime(height int) (float64, error) {
 
 	lastHeightTime := block.Block.Header.Time
 
-	rsp, err = a.Client.R().Get(aheadHeightUrl)
+	rsp, err = a.Client.R().Get(aheadHeightURL)
 	if err != nil {
 		return 0.0, err
 	}
@@ -222,11 +223,13 @@ func (a *action) getInflation() (string, error) {
 
 	rsp, err := a.R().Get(url)
 	if err != nil {
+		log.Err(err).Interface(`url`, url).Msg(`getInflation`)
 		return "", err
 	}
 
 	err = json.Unmarshal(rsp.Body(), &inflation)
 	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getInflation`)
 		return "", err
 	}
 	result := inflation.Result
@@ -254,22 +257,34 @@ func (a *action) getPrice() string {
 	/*
 		30分钟从网站取一次价格
 	*/
+	type Result struct {
+		Price string `json:"hst_pri"`
+	}
+	type Price struct {
+		Code   int    `json:"code"`
+		Result Result `json:"result"`
+	}
 	var price Price
 
-	rsp, err := a.R().Get(a.CoinPriceURL)
+	rsp, err := a.Client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).R().Get(a.CoinPriceURL)
 
 	if err != nil {
-		logger.Err(err).Interface(`url`, a.CoinPriceURL).Msg(`getPrice`)
+		log.Err(err).Interface(`url`, a.CoinPriceURL).Msg(`getPrice`)
 		return tokenPrice
 	}
 
-	_ = json.Unmarshal(rsp.Body(), &price)
-	if len(price.Data) < 1 {
-		// empty
+	err = json.Unmarshal(rsp.Body(), &price)
+	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp.Result()).Interface(`url`, a.CoinPriceURL).Msg(`getPrice`)
 		return tokenPrice
-	} else {
-		return price.Data[0].ClosePrice
 	}
+
+	if price.Code != 200 {
+		log.Err(err).Interface(`rsp`, rsp.Result()).Interface(`url`, a.CoinPriceURL).Msg(`getPrice`)
+		return tokenPrice
+	}
+	return price.Result.Price
+
 }
 
 func (a *action) pledgenAndTotal() (int, int, int, error) {
@@ -280,11 +295,13 @@ func (a *action) pledgenAndTotal() (int, int, int, error) {
 
 	rsp, err := a.R().Get(url)
 	if err != nil {
+		log.Err(err).Interface(`url`, url).Msg(`pledgenAndTotal`)
 		return 0, 0, 0, err
 	}
 
 	err = json.Unmarshal(rsp.Body(), &pledgenAndTotalHsn)
 	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`pledgenAndTotal`)
 		return 0, 0, 0, err
 	}
 	bonded, _ := strconv.Atoi(pledgenAndTotalHsn.Result.BondedTokens)
@@ -296,53 +313,59 @@ func (a *action) pledgenAndTotal() (int, int, int, error) {
 
 func (a *action) getValidatorState() (int, int, error) {
 	var validators model.Validators
-	bondedUrl := a.LcdURL + "/staking/validators?status=bonded&page=1"
-	unbondedUrl := a.LcdURL + "/staking/validators?status=unbonded&page=1"
-	unbondingdUrl := a.LcdURL + "/staking/validators?status=unbonding&page=1"
+	bondedURL := a.LcdURL + "/staking/validators?status=bonded&page=1"
+	unbondedURL := a.LcdURL + "/staking/validators?status=unbonded&page=1"
+	unbondingdURL := a.LcdURL + "/staking/validators?status=unbonding&page=1"
 	var jailed = 0
 	var total = 0
 
-	rsp, err := a.R().Get(bondedUrl)
+	rsp, err := a.R().Get(bondedURL)
 	if err != nil {
+		log.Err(err).Interface(`url`, bondedURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, bondedURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	for _, item := range validators.Result {
 		if item.Jailed {
-			jailed += 1
+			jailed++
 		}
 	}
 	total += len(validators.Result)
 
-	rsp, err = a.R().Get(unbondingdUrl)
+	rsp, err = a.R().Get(unbondingdURL)
 	if err != nil {
+		log.Err(err).Interface(`url`, unbondingdURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondingdURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	for _, item := range validators.Result {
 		if item.Jailed {
-			jailed += 1
+			jailed++
 		}
 	}
 	total += len(validators.Result)
 
-	rsp, err = a.R().Get(unbondedUrl)
+	rsp, err = a.R().Get(unbondedURL)
 	if err != nil {
+		log.Err(err).Interface(`url`, unbondedURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	err = json.Unmarshal(rsp.Body(), &validators)
 	if err != nil {
+		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondedURL).Msg(`getValidatorState`)
 		return 0, 0, err
 	}
 	for _, item := range validators.Result {
 		if item.Jailed {
-			jailed += 1
+			jailed++
 		}
 	}
 	total += len(validators.Result)
@@ -355,25 +378,25 @@ func (a *action) GetPublic() {
 		price := a.getPriceFormDragonex()
 		height, pledgen, total, err := a.pledgenAndTotal()
 		if err != nil {
-			logger.Err(err).Msg(`pledgenAndTotalHsn`)
+			log.Err(err).Msg(`pledgenAndTotalHsn`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 		inflation, err := a.getInflation()
 		if err != nil {
-			logger.Err(err).Msg(`getInflation`)
+			log.Err(err).Msg(`getInflation`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 		onlineV, totalV, err := a.getValidatorState()
 		if err != nil {
-			logger.Err(err).Msg(`getValidators`)
+			log.Err(err).Msg(`getValidators`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 		blockTime, err := a.getBLockTime(height)
 		if err != nil {
-			logger.Err(err).Msg(`getBLockTime`)
+			log.Err(err).Msg(`getBLockTime`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
@@ -405,13 +428,16 @@ func (a *action) GetBlock() {
 				url := a.LcdURL + "/blocks/" + strconv.Itoa(lastBlockHeight)
 				rsp, err := a.Client.R().Get(url)
 				if err != nil {
+					log.Err(err).Interface(`url`, url).Msg(`GetBlock`)
 					lastBlockHeight = lastBlockHeight - 1
 					time.Sleep(time.Second * 2)
 					continue
 				}
 				err = json.Unmarshal(rsp.Body(), &block)
 				if err != nil {
-
+					log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetBlock`)
+					time.Sleep(time.Second * 2)
+					continue
 				}
 				a.Block.SetBlock(block)
 			}
@@ -433,13 +459,13 @@ func (a *action) GetValidators() {
 
 		ValidatorsSet := a.Validator.GetValidatorSet(a.VSetCap)
 
-		bondedUrl := a.LcdURL + "/staking/validators?status=bonded"
-		unbondedUrl := a.LcdURL + "/staking/validators?status=unbonded"
-		unbondingdUrl := a.LcdURL + "/staking/validators?status=unbonding"
+		bondedURL := a.LcdURL + "/staking/validators?status=bonded"
+		unbondedURL := a.LcdURL + "/staking/validators?status=unbonded"
+		unbondingdURL := a.LcdURL + "/staking/validators?status=unbonding"
 
-		rsp, err := a.Client.R().Get(bondedUrl)
+		rsp, err := a.Client.R().Get(bondedURL)
 		if err != nil {
-			logger.Err(err).Msg(`get bonded validator`)
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, bondedURL).Msg(`GetValidators`)
 			time.Sleep(time.Second * 2)
 			continue
 		}
@@ -450,11 +476,13 @@ func (a *action) GetValidators() {
 				info := a.dealWithValidatorList(item, a.CoinToVotingPower, ValidatorsSet)
 				validatorInfos = append(validatorInfos, info)
 			}
+		} else {
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, bondedURL).Msg(`GetValidators`)
 		}
 
-		rsp, err = a.Client.R().Get(unbondingdUrl)
+		rsp, err = a.Client.R().Get(unbondingdURL)
 		if err != nil {
-			logger.Err(err).Msg(`get unbonding validator`)
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondingdURL).Msg(`GetValidators`)
 			time.Sleep(time.Second * 2)
 			continue
 		}
@@ -465,11 +493,13 @@ func (a *action) GetValidators() {
 				info := a.dealWithValidatorList(item, a.CoinToVotingPower, ValidatorsSet)
 				validatorInfos = append(validatorInfos, info)
 			}
+		} else {
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondingdURL).Msg(`GetValidators`)
 		}
 
-		rsp, err = a.Client.R().Get(unbondedUrl)
+		rsp, err = a.Client.R().Get(unbondedURL)
 		if err != nil {
-			logger.Err(err).Msg(`get unbonded validator`)
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondedURL).Msg(`GetValidators`)
 			time.Sleep(time.Second * 2)
 			continue
 		}
@@ -480,6 +510,8 @@ func (a *action) GetValidators() {
 				info := a.dealWithValidatorList(item, a.CoinToVotingPower, ValidatorsSet)
 				validatorInfos = append(validatorInfos, info)
 			}
+		} else {
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, unbondedURL).Msg(`GetValidators`)
 		}
 
 		for _, info := range validatorInfos {

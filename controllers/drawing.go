@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"explorer/model"
-	"github.com/astaxie/beego"
-	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"time"
+
+	"github.com/astaxie/beego"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type DrawingDataController struct {
@@ -32,9 +33,9 @@ type Items struct {
 func (ddc *DrawingDataController) Get() {
 	ddc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", ddc.Ctx.Request.Header.Get("Origin"))
 	var public model.Information
-	var respJson Drawing
+	var respJSON Drawing
 	var price []float64
-	var token [] int
+	var token []int
 
 	conn := ddc.Base.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
@@ -55,11 +56,11 @@ func (ddc *DrawingDataController) Get() {
 
 	}
 
-	respJson.Data.Price = price
-	respJson.Data.Token = token
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	ddc.Data["json"] = respJson
+	respJSON.Data.Price = price
+	respJSON.Data.Token = token
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	ddc.Data["json"] = respJSON
 	ddc.ServeJSON()
 
 }

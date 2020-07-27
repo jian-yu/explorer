@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"explorer/model"
+
 	"github.com/astaxie/beego"
 )
 
@@ -24,16 +25,16 @@ type Public struct {
 func (pb *PublicController) Get() {
 	pb.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", pb.Ctx.Request.Header.Get("Origin"))
 	var public model.Information
-	var respJson Public
+	var respJSON Public
 
 	conn := pb.Base.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
 	_ = conn.C("public").Find(nil).Sort("-height").One(&public)
-	respJson.Data = public
-	respJson.Code = "0"
-	respJson.Msg = "OK"
-	pb.Data["json"] = respJson
+	respJSON.Data = public
+	respJSON.Code = "0"
+	respJSON.Msg = "OK"
+	pb.Data["json"] = respJSON
 	pb.ServeJSON()
 
 }

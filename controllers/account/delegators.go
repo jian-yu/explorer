@@ -3,8 +3,9 @@ package account
 import (
 	"explorer/controllers"
 	"explorer/model"
-	"github.com/astaxie/beego"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type DeleatorsController struct {

@@ -2,9 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"time"
+
+	"github.com/rs/zerolog/log"
+
 	"github.com/astaxie/beego"
 	"github.com/go-resty/resty/v2"
-	"time"
 )
 
 type TxsMsgs interface {
@@ -81,12 +84,17 @@ func (td *TxDetailControllers) Get() {
 		url := td.Base.LcdURL + "/txs/" + hash
 		rsp, err := httpCli.R().Get(url)
 		if err != nil {
-			logger.Err(err).Interface(`url`, url).Msg(`Get`)
+			log.Err(err).Interface(`url`, url).Msg(`Get`)
 			td.Abort("500")
 			return
 		}
 
 		err = json.Unmarshal(rsp.Body(), &txd)
+		if err != nil {
+			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`Get`)
+			td.Abort("500")
+			return
+		}
 		msg.Data = txd
 		msg.Code = "0"
 		msg.Msg = "OK"

@@ -1,20 +1,25 @@
-GenesisAddress = ""
 [MongoDB]
-    URL = ""
-    DBName = ""
-    PoolLimit = 50
+    URL = "mongodb://localhost:27017/hschain"
+    DBName = "hschain"
+    PoolLimit = 1500
     Timeout = 60
+    Mechanism = "DEFAULT"
+    Username = "hschain"
+    Password = "hschain"
 [RPC]
-    URL = ""
+    URL = "http://home.newtron.cn:26657"
 [LCD]
-    URL = ""
+    URL = "http://home.newtron.cn:1317"
 [Public]
     Bech32PrefixAccAddr =  "hsc"
     Bech32PrefixValAddr =  "hscvaloper"
-    ChainId =              "hst"
+    ChainId =              "testnet"
     ChainName =            "hst"
     CoinGeckoId =         "hst"
     Denom = "hst"
     CoinToVoitingPower =   1.0
     ValidatorSetLimit =   100
-    CoinPriceURL = ""
+    CoinPriceURL = "https://hsc.tt-cool.com/h5/hst_pri"
+    GenesisAddress = "http://home.newtron.cn:26657/genesis?"
+[LOG]
+    Level = "trace"

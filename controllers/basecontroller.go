@@ -3,15 +3,13 @@ package controllers
 import (
 	"explorer/common"
 	"explorer/db"
-	"github.com/rs/zerolog/log"
+
 	"github.com/spf13/viper"
 )
 
-var logger = log.With().Logger()
-
 type BaseController struct {
 	LcdURL              string
-	RpcURL              string
+	RPCURL              string
 	Bech32PrefixAccAddr string
 	Bech32PrefixValAddr string
 
@@ -43,7 +41,7 @@ func NewBaseController(m db.MgoOperator) *BaseController {
 
 	return &BaseController{
 		LcdURL:              lcdURL,
-		RpcURL:              rpcURL,
+		RPCURL:              rpcURL,
 		Bech32PrefixAccAddr: bech32PrefixAccAddr,
 		Bech32PrefixValAddr: bech32PrefixValAddr,
 		MgoOperator:         m,

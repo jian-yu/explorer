@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"explorer/db"
 	"explorer/model"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/viper"
 )
@@ -25,11 +26,11 @@ func (a *account) getName(validatorAddress string) string {
 	return validator.AKA
 }
 
-func (a *account) getReward(tokenName, baseURl, validatorAddress, delegatorAddress string) string {
+func (a *account) getReward(tokenName, baseURL, validatorAddress, delegatorAddress string) string {
 	var reward model.DelegatorValidatorReward
 	var httpClient = resty.New()
 
-	url := baseURl + "/distribution/delegators/" + delegatorAddress + "/rewards/" + validatorAddress
+	url := baseURL + "/distribution/delegators/" + delegatorAddress + "/rewards/" + validatorAddress
 	rsp, err := httpClient.R().EnableTrace().Get(url)
 	if err != nil {
 		logger.Err(err).Interface(`url`, url).Msg(`getReward`)

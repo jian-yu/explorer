@@ -1,6 +1,5 @@
 package account
 
-
 type DelegateRewards struct {
 	Result struct {
 		Total []struct {

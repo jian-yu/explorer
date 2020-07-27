@@ -30,11 +30,11 @@ type WithdrawAddress struct {
 }
 
 type BaseInfo struct {
-	Address       string `json:"address"`
-	RewardAddress string `json:"reward_address"`
+	Address       string  `json:"address"`
+	RewardAddress string  `json:"reward_address"`
 	Amount        float64 `json:"amount"`
 	TotalPrice    float64 `json:"total_price"`
-	Price float64 `json:"price"`
+	Price         float64 `json:"price"`
 }
 
 //func (a *Account) GetInfo(address string)(string,string) {

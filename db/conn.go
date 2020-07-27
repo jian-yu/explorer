@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
@@ -20,15 +22,22 @@ func NewMongoStore() MgoOperator {
 		log.Error().Str(`params`, "mongo url or name bot be empty").Msg(`NewMongoStore`)
 		return nil
 	}
-	info, _ := mgo.ParseURL(mgoURL)
-	info.PoolLimit = viper.GetInt(`MongoDB.PoolLimit`)
-	info.Timeout = viper.GetDuration(`MongoDB.Timeout`)
-	sess, err := mgo.DialWithInfo(info)
+	log.Debug().Interface(`mgoURL`, mgoURL).Msg(`NewMongoStore`)
+	log.Debug().Interface(`mgoDBName`, mgoDBName).Msg(`NewMongoStore`)
+
+	info, err := mgo.ParseURL(mgoURL)
 	if err != nil {
 		panic(err)
 	}
 
-	if err = sess.Ping(); err != nil {
+	info.PoolLimit = viper.GetInt(`MongoDB.PoolLimit`)
+	info.Timeout = time.Duration(viper.GetInt(`MongoDB.Timeout`)) * time.Second
+	//info.Mechanism = viper.GetString(`MongoDB.Mechanism`)
+	info.Username = viper.GetString(`MongoDB.Username`)
+	info.Password = viper.GetString(`MongoDB.Password`)
+
+	sess, err := mgo.DialWithInfo(info)
+	if err != nil {
 		panic(err)
 	}
 

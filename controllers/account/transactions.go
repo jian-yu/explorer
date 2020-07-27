@@ -2,8 +2,9 @@ package account
 
 import (
 	"explorer/controllers"
-	"github.com/astaxie/beego"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type DelegatorTxController struct {
@@ -46,7 +47,7 @@ func (dtc *DelegatorTxController) Get() {
 	} else {
 		//var txList models.Txs
 		var txsSet = make([]txInfo, size)
-		var respJson TxBlocks
+		var respJSON TxBlocks
 		list, count := dtc.Base.Transaction.GetDelegatorTxs(address, page, size)
 		//list, count := txList.GetDelegatorTxs(address, page, size)
 		for i, item := range *list {
@@ -65,11 +66,11 @@ func (dtc *DelegatorTxController) Get() {
 			}
 
 		}
-		respJson.Code = "0"
-		respJson.Msg = "OK"
-		respJson.Total = count
-		respJson.Data = txsSet
-		dtc.Data["json"] = respJson
+		respJSON.Code = "0"
+		respJSON.Msg = "OK"
+		respJSON.Total = count
+		respJSON.Data = txsSet
+		dtc.Data["json"] = respJSON
 
 	}
 
@@ -79,11 +80,11 @@ func getAmount(amounts []float64) float64 {
 	var totalAmount float64
 	if len(amounts) <= 0 {
 		return 0.0
-	} else {
-		for i := 0; i < len(amounts); i++ {
-			totalAmount = totalAmount + amounts[i]
-		}
 	}
+	for i := 0; i < len(amounts); i++ {
+		totalAmount = totalAmount + amounts[i]
+	}
+
 	return totalAmount
 }
 
