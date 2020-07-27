@@ -29,7 +29,7 @@ type UnbondingsMsg struct {
 // @Description
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (uc *UnbondingsController) Get() {
 	uc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", uc.Ctx.Request.Header.Get("Origin"))
 	address := uc.GetString("address")

@@ -32,7 +32,7 @@ type TxBlocks struct {
 // @Description
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (dtc *DelegatorTxController) Get() {
 	dtc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", dtc.Ctx.Request.Header.Get("Origin"))
 	address := dtc.GetString("address")

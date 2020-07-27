@@ -29,7 +29,7 @@ type Items struct {
 // @Description 首页小图
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (ddc *DrawingDataController) Get() {
 	ddc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", ddc.Ctx.Request.Header.Get("Origin"))
 	var public model.Information

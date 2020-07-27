@@ -329,7 +329,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 			}
 		}
 		page++
-		time.Sleep(time.Second * 2)
+		//time.Sleep(time.Second * 2)
 	}
 
 }

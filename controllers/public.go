@@ -21,7 +21,7 @@ type Public struct {
 // @Description public Item
 // @Success code 0
 // @Failure code 1
-//@router / [get]
+// @router / [get]
 func (pb *PublicController) Get() {
 	pb.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", pb.Ctx.Request.Header.Get("Origin"))
 	var public model.Information

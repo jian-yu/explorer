@@ -32,7 +32,7 @@ type BlockSimple struct {
 // @Description 默认获取after head的20个区块详细信息
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (bc *BlockController) Get() {
 	bc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bc.Ctx.Request.Header.Get("Origin"))
 	head, _ := bc.GetInt("head", 0)

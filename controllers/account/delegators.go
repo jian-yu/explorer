@@ -29,7 +29,7 @@ type DelegatorMsg struct {
 // @Description
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (dc *DeleatorsController) Get() {
 	dc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", dc.Ctx.Request.Header.Get("Origin"))
 	address := dc.GetString("address")

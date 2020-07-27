@@ -30,7 +30,7 @@ type baseInfoMsg struct {
 // @Description
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (bic *BaseInfoController) Get() {
 	bic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bic.Ctx.Request.Header.Get("Origin"))
 	address := bic.GetString("address")

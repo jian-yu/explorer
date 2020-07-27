@@ -37,7 +37,7 @@ type Kinds struct {
 // @Description
 // @Success code 0
 // @Failure code 1
-//@router /
+// @router /
 func (krc *KindsRewardController) Get() {
 	krc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", krc.Ctx.Request.Header.Get("Origin"))
 	address := krc.GetString("address", "")
