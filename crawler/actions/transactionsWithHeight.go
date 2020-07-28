@@ -345,11 +345,3 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 	return nil
 }
 
-//func getPage(types string) int {
-//	var txsInfo models.Txs
-//	session := db.NewDBConn()
-//	defer session.Close()
-//	dbConn := session.DB(conf.NewConfig().DBName)
-//	_ = dbConn.C("Txs").Find(bson.M{"type": types}).Sort("-height").One(&txsInfo)
-//	return txsInfo.Page
-//}

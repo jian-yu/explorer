@@ -5,48 +5,6 @@ type ValidatorToDelegatorAddress struct {
 	DelegatorAddress string `json:"delegator_address"`
 }
 
-// func (vaada *ValidatorAddressAndDelegatorAddress) Set(log zap.Logger) {
-// 	// store
-
-// 	session := db.NewDBConn()
-// 	defer session.Close()
-// 	dbConn := session.DB(conf.NewConfig().DBName)
-// 	c := dbConn.C("mapping")
-// 	err := c.Insert(&vaada)
-// 	if err == nil {
-// 		log.Info("insert mappingRelationship success")
-// 	} else {
-// 		log.Error("insert mappingRelationship failed", zap.String("error", err.Error()))
-// 	}
-// }
-
-// func (vaada *ValidatorAddressAndDelegatorAddress) Get() {
-
-// }
-
-// func (vaada *ValidatorAddressAndDelegatorAddress) Check(address string) (int, string) {
-// 	var tempValue ValidatorAddressAndDelegatorAddress
-// 	session := db.NewDBConn()
-// 	count := 0
-// 	defer session.Close()
-// 	dbConn := session.DB(conf.NewConfig().DBName)
-// 	dbConn.C("mapping").Find(bson.M{"validatoraddress": address}).One(&tempValue)
-// 	if tempValue.DelegatorAddress != "" {
-// 		count = 1
-// 	}
-// 	return count, tempValue.DelegatorAddress
-// }
-
-// func (vaada *ValidatorAddressAndDelegatorAddress) CheckDelegatorAddress(address string) (string, string) {
-// 	var tempValue ValidatorAddressAndDelegatorAddress
-// 	session := db.NewDBConn()
-// 	defer session.Close()
-// 	dbConn := session.DB(conf.NewConfig().DBName)
-// 	_ = dbConn.C("mapping").Find(bson.M{"delegatoraddress": address}).One(&tempValue)
-
-// 	return tempValue.ValidatorAddress, tempValue.DelegatorAddress
-// }
-
 type GenesisFile struct {
 	Result struct {
 		Genesis struct {

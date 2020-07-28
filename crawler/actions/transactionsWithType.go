@@ -21,41 +21,204 @@ import (
 //http://172.38.8.89:1317/txs?message.action=multisend
 // .. Unfinished
 
+const (
+	SendURL             = "/txs?message.action=send"
+	DelegateURL         = "/txs?message.action=delegate"
+	VoteURL             = "/txs?message.action=vote"
+	UnDelegateURL       = "/txs?message.action=begin_unbonding"
+	RewardURL           = "/txs?message.action=withdraw_delegator_reward"
+	RewardCommissionURL = "/txs?message.action=withdraw_validator_commission"
+	MultiSendURL        = "/txs?message.action=multisend"
+	ReDelegateURL       = "/txs?message.action=begin_redelegate"
+	CreateValidatorURL  = "/txs?message.action=create_validator"
+	EditValidatorURL    = "/txs?message.action=edit_validator"
+	EditAddressURL      = "/txs?message.action=set_withdraw_address"
+	SubmitProposalURL   = "/txs?message.action=submit_proposal"
+	DepositURL          = "/txs?message.action=deposit"
+)
+
+//type TxMsgField struct {
+//	fee                                                                                                        float64
+//	realAmount, withDrawRewardAmount, withDrawCommissionAmount                                                 []float64
+//	delegatorList, validatorList, fromAddress, toAddress, outputsAddress, inputsAddress, voterAddress, options []string
+//}
+//
+//var MsgTypeHandle = map[string]func(json *simplejson.Json,event *simplejson.Json) *TxMsgField{
+//	"cosmos-sdk/MsgSend":                        msgSendHandle,
+//	"cosmos-sdk/MsgMultiSend":                   msgMultiSendHandle,
+//	"cosmos-sdk/MsgVote":                        msgVoteHandle,
+//	"cosmos-sdk/MsgWithdrawValidatorCommission": msgWithdrawValidatorCommissionHandle,
+//	"cosmos-sdk/MsgWithdrawDelegationReward":    msgWithdrawDelegationRewardHandle,
+//	"cosmos-sdk/MsgDelegate":                    msgDelegateHandle,
+//	"cosmos-sdk/MsgBeginRedelegate":             msgBeginRedelegateHandle,
+//	"cosmos-sdk/MsgUndelegate":                  msgUndelegateHandle,
+//	"cosmos-sdk/MsgCreateValidator":             msgCreateValidatorHandle,
+//	"cosmos-sdk/MsgModifyWithdrawAddress":       msgModifyWithdrawAddressHandle,
+//	"cosmos-sdk/MsgSubmitProposal":              msgSubmitProposal,
+//	"cosmos-sdk/MsgDeposit":                     msgDepositHandle,
+//}
+
+var ChainName = ""
+
 func (a *action) GetTxs() {
 
-	var Lcd = a.LcdURL
-	var SendURL = Lcd + "/txs?message.action=send"
-	var DelegateURL = Lcd + "/txs?message.action=delegate"
-	var VoteURL = Lcd + "/txs?message.action=vote"
-	var UnDelegateURL = Lcd + "/txs?message.action=begin_unbonding"
-	var RewardURL = Lcd + "/txs?message.action=withdraw_delegator_reward"
-	var RewardCommissionURL = Lcd + "/txs?message.action=withdraw_validator_commission"
-	var MultiSendURL = Lcd + "/txs?message.action=multisend"
-	var ReDelegateURL = Lcd + "/txs?message.action=begin_redelegate"
-	var CreateValidatorURL = Lcd + "/txs?message.action=create_validator"
-	var EditValidatorURL = Lcd + "/txs?message.action=edit_validator"
-	var EditAddressURL = Lcd + "/txs?message.action=set_withdraw_address"
-	var SubmitProposalURL = Lcd + "/txs?message.action=submit_proposal"
-	var DepositURL = Lcd + "/txs?message.action=deposit"
+	ChainName = a.ChainName
 	//get the transaction judge whether it is stored in the database
 	for {
-		a.getTxs(SendURL, a.ChainName, "send")
-		a.getTxs(DelegateURL, a.ChainName, "delegate")
-		a.getTxs(RewardCommissionURL, a.ChainName, "commission")
-		a.getTxs(RewardURL, a.ChainName, "reward")
-		a.getTxs(VoteURL, a.ChainName, "vote")
-		a.getTxs(UnDelegateURL, a.ChainName, "unbonding")
-		a.getTxs(MultiSendURL, a.ChainName, "multisend")
-		a.getTxs(ReDelegateURL, a.ChainName, "redelegate")
-		a.getTxs(CreateValidatorURL, a.ChainName, "createValidator")
-		a.getTxs(EditValidatorURL, a.ChainName, "editValidator")
-		a.getTxs(EditAddressURL, a.ChainName, "editAddress")
-		a.getTxs(SubmitProposalURL, a.ChainName, "submitProposal")
-		a.getTxs(DepositURL, a.ChainName, "deposit")
+		a.getTxs(a.LcdURL+SendURL, a.ChainName, "send")
+		a.getTxs(a.LcdURL+DelegateURL, a.ChainName, "delegate")
+		a.getTxs(a.LcdURL+RewardCommissionURL, a.ChainName, "commission")
+		a.getTxs(a.LcdURL+RewardURL, a.ChainName, "reward")
+		a.getTxs(a.LcdURL+VoteURL, a.ChainName, "vote")
+		a.getTxs(a.LcdURL+UnDelegateURL, a.ChainName, "unbonding")
+		a.getTxs(a.LcdURL+MultiSendURL, a.ChainName, "multisend")
+		a.getTxs(a.LcdURL+ReDelegateURL, a.ChainName, "redelegate")
+		a.getTxs(a.LcdURL+CreateValidatorURL, a.ChainName, "createValidator")
+		a.getTxs(a.LcdURL+EditValidatorURL, a.ChainName, "editValidator")
+		a.getTxs(a.LcdURL+EditAddressURL, a.ChainName, "editAddress")
+		a.getTxs(a.LcdURL+SubmitProposalURL, a.ChainName, "submitProposal")
+		a.getTxs(a.LcdURL+DepositURL, a.ChainName, "deposit")
 		time.Sleep(time.Second * 4) //Avoid frequent request api
 	}
 
 }
+
+//func (a *action) getTx(url string, types string) {
+//	var txsInfo model.Txs
+//	page := a.getPage(types)
+//	if page == 0 {
+//		page = 1
+//	}
+//
+//	httpCli := resty.New()
+//	rsp, err := httpCli.R().Get(url + "&page=" + strconv.Itoa(page))
+//	if err != nil {
+//		log.Err(err).Interface(`url`, url).Msg(`getTxs`)
+//		time.Sleep(time.Second * 4)
+//		return
+//	}
+//
+//	jsonObj, err := simplejson.NewJson(rsp.Body())
+//	if err != nil {
+//		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
+//	}
+//	jsonTxs, err := jsonObj.Get("txs").Array()
+//
+//	if err != nil {
+//		return
+//	}
+//
+//	txsLen := len(jsonTxs)
+//	if txsLen == 0 {
+//		return
+//	}
+//
+//	txsError, err := jsonObj.Get("error").String()
+//	if err != nil {
+//		return
+//	}
+//
+//	if txsError != "" {
+//		return
+//	}
+//
+//	txsObj := jsonObj.Get("txs")
+//
+//	for index := 0; index < txsLen; index++ {
+//		//var fee float64
+//		txObj := txsObj.GetIndex(index)
+//
+//		txHash, _ := txObj.Get("txhash").String()
+//		if isTxExist := a.Transaction.CheckHash(txHash); isTxExist == 0 {
+//			continue
+//		}
+//		height, _ := txsObj.Get("height").String()
+//		status, _ := txsObj.Get("logs").GetIndex(0).Get("success").Bool()
+//		txTime, _ := txsObj.Get("timestamp").String()
+//		logs, _ := txsObj.Get("logs").Array()
+//		pluse := len(logs)
+//
+//		txObj = txsObj.Get("tx")
+//
+//		tmf := txMsgHandle(txObj)
+//
+//		if tmf != nil {
+//			txsInfo.Height, _ = strconv.Atoi(height)
+//			txsInfo.TxHash = txHash
+//			txsInfo.Result = status
+//			txsInfo.Page = page
+//			txsInfo.Amount = tmf.realAmount
+//			txsInfo.Plus = pluse
+//			txsInfo.Fee = tmf.fee
+//			txsInfo.Type = types
+//			txsInfo.Time = time.Now()
+//			txsInfo.TxTime = txTime //string to time
+//			txsInfo.ValidatorAddress = tmf.validatorList
+//			txsInfo.DelegatorAddress = tmf.delegatorList
+//			txsInfo.WithDrawCommissionAmout = tmf.withDrawCommissionAmount
+//			txsInfo.WithDrawRewardAmout = tmf.withDrawRewardAmount
+//			txsInfo.FromAddress = tmf.fromAddress
+//			txsInfo.ToAddress = tmf.toAddress
+//			txsInfo.OutPutsAddress = tmf.outputsAddress
+//			txsInfo.InputsAddress = tmf.inputsAddress
+//			txsInfo.VoterAddress = tmf.voterAddress
+//			txsInfo.Options = tmf.options
+//			a.Transaction.SetInfo(txsInfo)
+//		}
+//	}
+//
+//}
+
+/**
+  "tx": {
+      "type": "cosmos-sdk/StdTx",
+      "value": {
+          "msg": [
+              {
+                  "type": "cosmos-sdk/MsgDelegate",
+                  "value": {
+                      "delegator_address": "hsn1j4yux0ytemqjmcd6z7dej7ermuw2hp9mgwu04a",
+                      "validator_address": "hsnvaloper1zqxayv6qe50w6h3ynfj6tq9pr09r7rtu4u3wgp",
+                      "amount": {
+                          "denom": "hsn",
+                          "amount": "8465216965"
+                      }
+                  }
+              }
+          ],
+          "fee": {
+              "amount": [],
+              "gas": "200000"
+          },
+          "signatures": [
+              {
+                  "pub_key": {
+                      "type": "tendermint/PubKeySecp256k1",
+                      "value": "Awc87jJrm2k5JKdmDDDvvfrvsTm+nn4MF3V2KY2hByDw"
+                  },
+                  "signature": "eCUibWhipX+pMq3Uc/Y9lQo76BnhSEilHtu+frMbNighPwR5EUAS86EBzFhEdPKdu/gRp/PXmYAdXiW7NYYqRg=="
+              }
+          ],
+          "memo": ""
+      }
+*/
+//func txMsgHandle(txObj *simplejson.Json) *TxMsgField {
+//	msgArrObj := txObj.Get("value").Get("msg")
+//	msgArr, _ := msgArrObj.Array()
+//	msgArrLen := len(msgArr)
+//	if msgArrLen == 0 {
+//		return nil
+//	}
+//	for index := 0; index < msgArrLen; index++ {
+//		msgObj := msgArrObj.GetIndex(index)
+//		typo, _ := msgObj.Get("type").String()
+//		if handle, ok := MsgTypeHandle[typo]; ok {
+//			return handle(msgObj)
+//		}
+//	}
+//	return nil
+//}
+
 func (a *action) getTxs(url string, chainName string, types string) {
 	page := a.getPage(types)
 	if page == 0 {
@@ -342,3 +505,231 @@ func (a *action) getPage(types string) int {
 	_ = conn.C("Txs").Find(bson.M{"type": types}).Sort("-height").One(&txsInfo)
 	return txsInfo.Page
 }
+
+//
+//func feeCollection(feeObj *simplejson.Json, chainName string) float64 {
+//	var fee float64
+//	feeArray, err := feeObj.Array()
+//	if err != nil {
+//		return 0
+//	}
+//
+//	for index := 0; index < len(feeArray); index++ {
+//		demo, err := feeObj.GetIndex(index).Get("denom").String()
+//		if err != nil {
+//			continue
+//		}
+//		if demo == chainName {
+//			strFee, _ := feeObj.GetIndex(index).Get("amount").String()
+//			floatFee, _ := strconv.ParseFloat(strFee, 64)
+//			fee = fee + floatFee
+//		}
+//	}
+//	return fee
+//}
+//
+//func msgSendHandle(msgJSONObj *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	// get amount,from address
+//	var fromAddress, toAddress []string
+//	var realAmount []float64
+//
+//	from, _ := msgJSONObj.Get("value").Get("from_address").String()
+//	to, _ := msgJSONObj.Get("value").Get("to_address").String()
+//	fromAddress = append(fromAddress, from)
+//	toAddress = append(toAddress, to)
+//
+//	amountObj := msgJSONObj.Get("value").Get("amount")
+//	amountArr, _ := msgJSONObj.Get("value").Get("amount").Array()
+//	for index := 0; index < len(amountArr); index++ {
+//		denom, _ := amountObj.GetIndex(index).Get("denom").String()
+//		if denom == ChainName {
+//			strAmount, _ := msgJSONObj.Get("amount").String()
+//			floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//			realAmount = append(realAmount, floatAmount)
+//		}
+//
+//	}
+//	return &TxMsgField{fromAddress: fromAddress, toAddress: toAddress, realAmount: realAmount}
+//}
+//
+//func msgMultiSendHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var outputsAddress, inputsAddress []string
+//	var realAmount []float64
+//
+//	outputsObj := msgJSON.Get("value").Get("outputs")
+//	outputsArray, _ := msgJSON.Get("value").Get("outputs").Array()
+//	for outputIndex := 0; outputIndex < len(outputsArray); outputIndex++ {
+//		output, _ := outputsObj.GetIndex(outputIndex).Get("address").String()
+//		outputsAddress = append(outputsAddress, output)
+//	}
+//
+//	inputsObj := msgJSON.Get("value").Get("inputs")
+//	inputsArray, _ := msgJSON.Get("value").Get("inputs").Array()
+//	for index2 := 0; index2 < len(inputsArray); index2++ {
+//		input, _ := inputsObj.GetIndex(index2).Get("address").String()
+//		inputsAddress = append(inputsAddress, input)
+//
+//		coinObj := inputsObj.GetIndex(index2).Get("coins")
+//		coinArray, _ := inputsObj.GetIndex(index2).Get("coins").Array()
+//		for innerIndex := 0; innerIndex < len(coinArray); innerIndex++ {
+//			denom, _ := coinObj.GetIndex(innerIndex).Get("denom").String()
+//			if denom == ChainName {
+//				strAmount, _ := coinObj.GetIndex(innerIndex).Get("amount").String()
+//				floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//				realAmount = append(realAmount, floatAmount)
+//			}
+//		}
+//	}
+//	return &TxMsgField{outputsAddress: outputsAddress, inputsAddress: inputsAddress, realAmount: realAmount}
+//}
+//func msgVoteHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	// No amount attribute get voter,options
+//	var voterAddress, options []string
+//
+//	voter, _ := msgJSON.Get("value").Get("voter").String()
+//	option, _ := msgJSON.Get("value").Get("option").String()
+//	voterAddress = append(voterAddress, voter)
+//	options = append(options, option)
+//	return &TxMsgField{voterAddress: voterAddress, options: options}
+//}
+//func msgWithdrawValidatorCommissionHandle(msgJSON *simplejson.Json,event *simplejson.Json) *TxMsgField {
+//	delegator, _ := msgJSON.Get("value").Get("delegator_address").String()
+//	validator, _ := msgJSON.Get("value").Get("validator_address").String()
+//
+//	eventObj := event
+//	eventsArr, _ := jsonObj.Get("txs").GetIndex(i).Get("events").Array()
+//	for iEvent := 0; iEvent < len(eventsArrery); iEvent++ {
+//		eventsType, _ := jsonObj.Get("txs").GetIndex(i).Get("events").GetIndex(iEvent).Get("type").String()
+//		if eventsType == "withdraw_commission" {
+//			attributesArrery, _ := jsonObj.Get("txs").GetIndex(i).Get("events").GetIndex(iEvent).Get("attributes").Array()
+//			for iAttributes := 0; iAttributes < len(attributesArrery); iAttributes++ {
+//				value, _ := jsonObj.Get("txs").GetIndex(i).Get("events").GetIndex(iEvent).Get("attributes").GetIndex(iAttributes).Get("value").String()
+//
+//				lenChanName := len(chainName)
+//				if len(value) > lenChanName && value[len(value)-lenChanName:] == chainName {
+//					floatAmout, _ := strconv.ParseFloat(value[0:len(value)-lenChanName], 64)
+//					withDrawCommissionAmout = append(withDrawCommissionAmout, floatAmout)
+//				}
+//			}
+//		}
+//	}
+//	if validator != "" {
+//		validatorList = append(validatorList, validator)
+//	}
+//	if delegator != "" {
+//		delegatorList = append(delegatorList, delegator)
+//	}
+//	return nil
+//}
+//
+//func msgWithdrawDelegationRewardHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	return nil
+//}
+//
+//func msgDelegateHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var realAmount []float64
+//	var validatorList, delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("delegator_address").String()
+//	validator, _ := msgJSON.Get("value").Get("validator_address").String()
+//	strAmount, _ := msgJSON.Get("value").Get("amount").Get("amount").String()
+//	floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//	realAmount = append(realAmount, floatAmount)
+//	validatorList = append(validatorList, validator)
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{validatorList: validatorList, delegatorList: delegatorList, realAmount: realAmount}
+//}
+//
+//func msgBeginRedelegateHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var realAmount []float64
+//	var validatorList, delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("delegator_address").String()
+//	validatorDst, _ := msgJSON.Get("value").Get("validator_dst_address").String()
+//	validatorSrc, _ := msgJSON.Get("value").Get("validator_src_address").String()
+//	strAmount, _ := msgJSON.Get("value").Get("amount").Get("amount").String()
+//	floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//	realAmount = append(realAmount, floatAmount, 0)
+//	validatorList = append(validatorList, validatorDst, validatorSrc)
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{validatorList: validatorList, delegatorList: delegatorList, realAmount: realAmount}
+//}
+//
+//func msgUndelegateHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	// get amount ,delegatorList, validatorList
+//	var realAmount []float64
+//	var validatorList, delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("delegator_address").String()
+//	validator, _ := msgJSON.Get("value").Get("validator_address").String()
+//	strAmount, _ := msgJSON.Get("value").Get("amount").Get("amount").String()
+//	floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//	realAmount = append(realAmount, floatAmount)
+//	validatorList = append(validatorList, validator)
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{validatorList: validatorList, delegatorList: delegatorList, realAmount: realAmount}
+//}
+//
+//func msgCreateValidatorHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var realAmount []float64
+//	var delegatorList []string
+//	var mappingValidatorDelegator model.ValidatorToDelegatorAddress
+//
+//	mappingValidatorDelegator.ValidatorAddress, _ = msgJSON.Get("value").Get("validator_address").String()
+//	mappingValidatorDelegator.DelegatorAddress, _ = msgJSON.Get("value").Get("delegator_address").String()
+//	//sign, _ := a.Validator.Check(mappingValidatorDelegator.ValidatorAddress)
+//	//if sign == 0 {
+//	//	a.Validator.SetValidatorToDelegatorAddr(mappingValidatorDelegator)
+//	//}
+//	strAmount, _ := msgJSON.Get("value").Get("value").Get("amount").String()
+//	floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//	realAmount = append(realAmount, floatAmount)
+//	delegatorList = append(delegatorList, mappingValidatorDelegator.DelegatorAddress)
+//	return &TxMsgField{realAmount: realAmount, delegatorList: delegatorList}
+//}
+//func msgModifyWithdrawAddressHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	//hash problem
+//	var delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("delegator_address").String()
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{delegatorList: delegatorList}
+//}
+//func msgDepositHandle(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var realAmount []float64
+//	var delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("proposer").String()
+//
+//	coinObj := msgJSON.Get("value").Get("initial_deposit")
+//	coinArray, _ := msgJSON.Get("value").Get("initial_deposit").Array()
+//	for innerIndex := 0; innerIndex < len(coinArray); innerIndex++ {
+//		denom, _ := coinObj.GetIndex(innerIndex).Get("denom").String()
+//		if denom == ChainName {
+//			strAmount, _ := coinObj.GetIndex(innerIndex).Get("amount").String()
+//			floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//			realAmount = append(realAmount, floatAmount)
+//		}
+//	}
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{delegatorList: delegatorList, realAmount: realAmount}
+//}
+//func msgSubmitProposal(msgJSON *simplejson.Json,event ...*simplejson.Json) *TxMsgField {
+//	var realAmount []float64
+//	var delegatorList []string
+//
+//	delegator, _ := msgJSON.Get("value").Get("depositor").String()
+//
+//	coinObj := msgJSON.Get("value").Get("amount")
+//	coinArray, _ := msgJSON.Get("value").Get("amount").Array()
+//	for innerIndex := 0; innerIndex < len(coinArray); innerIndex++ {
+//		denom, _ := coinObj.GetIndex(innerIndex).Get("denom").String()
+//		if denom == ChainName {
+//			strAmount, _ := coinObj.GetIndex(innerIndex).Get("amount").String()
+//			floatAmount, _ := strconv.ParseFloat(strAmount, 64)
+//			realAmount = append(realAmount, floatAmount)
+//		}
+//	}
+//	delegatorList = append(delegatorList, delegator)
+//	return &TxMsgField{delegatorList: delegatorList, realAmount: realAmount}
+//}
