@@ -17,12 +17,16 @@ type Public struct {
 	Msg  string            `json:"msg"`
 }
 
+func (pb *PublicController) URLMapping() {
+	pb.Mapping("Public", pb.Public)
+}
+
 // @Title Get
 // @Description public Item
 // @Success code 0
 // @Failure code 1
-// @router / [get]
-func (pb *PublicController) Get() {
+// @router /public [get]
+func (pb *PublicController) Public() {
 	pb.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", pb.Ctx.Request.Header.Get("Origin"))
 	var public model.Information
 	var respJSON Public

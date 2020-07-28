@@ -61,12 +61,16 @@ type TXD struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+func (td *TxDetailControllers) URLMapping() {
+	td.Mapping("Tx", td.Tx)
+}
+
 // @Title 获取tx detail
 // @Description 通过hash 查询 tx详情
 // @Success code 0
 // @Failure code 1
-// @router /
-func (td *TxDetailControllers) Get() {
+// @router /tx [get]
+func (td *TxDetailControllers) Tx() {
 	var httpCli = resty.New()
 	var msg Msgs
 	var txd TXD

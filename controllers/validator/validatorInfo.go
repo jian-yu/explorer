@@ -44,12 +44,16 @@ type ValidatorInfo struct {
 	MissedBlockList []model.MissBLockData `json:"missed_block_list"`
 }
 
+func (vbic *VaBaseInfoController) URLMapping() {
+	vbic.Mapping("ValidatorBase", vbic.ValidatorBase)
+}
+
 // @Title 获取validator detail
 // @Description 通过validator address 查询 validator detail详情
 // @Success code 0
 // @Failure code 1
-// @router /
-func (vbic *VaBaseInfoController) Get() {
+// @router /validatorBase [get]
+func (vbic *VaBaseInfoController) ValidatorBase() {
 	vbic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", vbic.Ctx.Request.Header.Get("Origin"))
 	address := vbic.GetString("address")
 	//var baseInfo validatorsDetail.ExtraValidatorInfo

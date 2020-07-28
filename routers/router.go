@@ -12,97 +12,109 @@ import (
 	"explorer/controllers/account"
 	"explorer/controllers/validator"
 	"explorer/db"
-
+	"explorer/utils"
 	"github.com/astaxie/beego"
+	"github.com/spf13/viper"
+	"os"
+	"strings"
 )
 
 func init() {
+
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	configPath := os.Getenv(`explorer_config_path`)
+
+	_, err := utils.LoadViper("", configPath)
+	if err != nil {
+		panic(err)
+	}
 
 	mgoStore := db.NewMongoStore()
 	baseController := controllers.NewBaseController(mgoStore)
 
 	krc := &account.KindsRewardController{Base: baseController}
 
-	ns := beego.NewNamespace("/api/v1",
-		beego.NSNamespace("/public",
+	ns := beego.NewNamespace("/api",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.PublicController{
 					Base: baseController,
 				},
 			),
 		),
-		beego.NSNamespace("/drawing",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.DrawingDataController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/blocks",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.BlockController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/txs",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.TxsController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/tx",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.TxDetailControllers{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/blockTxs",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.BlockTxController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/validators",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.ValidatorsController{Base: baseController},
 			),
 			//beego.NSRouter("/", &controllers.ValidatorsController{}),
 		),
-		beego.NSNamespace("/validatorBase",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&validator.VaBaseInfoController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/validatorDelegations",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&validator.DelegationsController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/validatorPowerEvent",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&validator.PowerEventController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/validatorProposedBlock",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&validator.ProposedBlocksController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/accountInfo",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&account.BaseInfoController{Base: baseController, KindsRewardController: krc},
 			),
 		),
-		beego.NSNamespace("/delegators",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&account.DeleatorsController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/unbonding",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&account.UnbondingsController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/delegatorTxs",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&account.DelegatorTxController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/delegatorAllKindsReward",
+		beego.NSNamespace("/v1",
 			beego.NSInclude(krc),
 		),
 	)

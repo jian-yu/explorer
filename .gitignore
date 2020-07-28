@@ -6,7 +6,9 @@
 *.dylib
 *.pprof
 *.memprof
+explorer
 
+routers/comments*.go
 # Test binary, build with `go test -c`
 *.test
 

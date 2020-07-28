@@ -33,12 +33,16 @@ type Kinds struct {
 	TotalAmount []decimal.Decimal `json:"total_amount"`
 }
 
+func (krc *KindsRewardController) URLMapping() {
+	krc.Mapping("DelegatorAllKindsReward", krc.DelegatorAllKindsReward)
+}
+
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (krc *KindsRewardController) Get() {
+// @router /delegatorAllKindsReward [get]
+func (krc *KindsRewardController) DelegatorAllKindsReward() {
 	krc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", krc.Ctx.Request.Header.Get("Origin"))
 	address := krc.GetString("address", "")
 

@@ -25,12 +25,16 @@ type Items struct {
 	Token []int     `json:"token"`
 }
 
+func (ddc *DrawingDataController) URLMapping() {
+	ddc.Mapping("Drawing", ddc.Drawing)
+}
+
 // @Title Get
 // @Description 首页小图
 // @Success code 0
 // @Failure code 1
-// @router /
-func (ddc *DrawingDataController) Get() {
+// @router /drawing [get]
+func (ddc *DrawingDataController) Drawing() {
 	ddc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", ddc.Ctx.Request.Header.Get("Origin"))
 	var public model.Information
 	var respJSON Drawing

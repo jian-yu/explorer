@@ -26,12 +26,16 @@ type ValidatorTypeList struct {
 	Candidate []model.ValidatorInfo `json:"candidate"`
 }
 
+func (vc *ValidatorsController) URLMapping() {
+	vc.Mapping("Validators", vc.Validators)
+}
+
 // @Title 获取Validators List
 // @Description get validators
 // @Success code 0
 // @Failure code 1
-// @router /
-func (vc *ValidatorsController) Get() {
+// @router /validators [get]
+func (vc *ValidatorsController) Validators() {
 	vc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", vc.Ctx.Request.Header.Get("Origin"))
 	types := vc.GetString("type", "")
 	//var validatorInfo models.ValidatorInfo

@@ -28,12 +28,16 @@ type TxBlocks struct {
 	Msg   string   `json:"msg"`
 }
 
+func (dtc *DelegatorTxController) URLMapping() {
+	dtc.Mapping("DelegatorTxs", dtc.DelegatorTxs)
+}
+
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (dtc *DelegatorTxController) Get() {
+// @router /delegatorTxs [get]
+func (dtc *DelegatorTxController) DelegatorTxs() {
 	dtc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", dtc.Ctx.Request.Header.Get("Origin"))
 	address := dtc.GetString("address")
 	page, _ := dtc.GetInt("page", 0)

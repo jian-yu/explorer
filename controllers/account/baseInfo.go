@@ -25,13 +25,17 @@ type baseInfoMsg struct {
 	Code string         `json:"code"`
 }
 
+func (bic *BaseInfoController) URLMapping() {
+	bic.Mapping("AccountInfo", bic.AccountInfo)
+}
+
 /**/
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (bic *BaseInfoController) Get() {
+// @router /accountInfo [get]
+func (bic *BaseInfoController) AccountInfo() {
 	bic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bic.Ctx.Request.Header.Get("Origin"))
 	address := bic.GetString("address")
 	if address == "" || strings.Index(address, bic.Base.Bech32PrefixAccAddr) != 0 || strings.Index(address, bic.Base.Bech32PrefixValAddr) == 0 {

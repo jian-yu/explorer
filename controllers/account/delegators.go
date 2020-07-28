@@ -25,12 +25,17 @@ type DelegatorMsg struct {
 	Code  string               `json:"code"`
 }
 
+func (dc *DeleatorsController) URLMapping() {
+	dc.Mapping("Delegators", dc.Delegators)
+}
+
+
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (dc *DeleatorsController) Get() {
+// @router /delegators [get]
+func (dc *DeleatorsController) Delegators() {
 	dc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", dc.Ctx.Request.Header.Get("Origin"))
 	address := dc.GetString("address")
 	page, _ := dc.GetInt("page", 0)

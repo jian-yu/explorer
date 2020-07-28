@@ -25,12 +25,17 @@ type UnbondingsMsg struct {
 	Code  string          `json:"code"`
 }
 
+func (uc *UnbondingsController) URLMapping() {
+	uc.Mapping("Unbonding", uc.Unbonding)
+}
+
+
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (uc *UnbondingsController) Get() {
+// @router /unbonding [get]
+func (uc *UnbondingsController) Unbonding() {
 	uc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", uc.Ctx.Request.Header.Get("Origin"))
 	address := uc.GetString("address")
 	page, _ := uc.GetInt("page", 0)

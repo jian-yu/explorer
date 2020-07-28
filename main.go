@@ -3,38 +3,17 @@ package main
 import (
 	"explorer/crawler"
 	"fmt"
-	"os"
+	"github.com/rs/zerolog/log"
 	"path/filepath"
 	"strconv"
-	"strings"
 
-	"github.com/rs/zerolog/log"
+	_ "explorer/routers"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
-
-func init() {
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-}
-
-func loadViper(envPrefix, configPath string) (*viper.Viper, error) {
-	if len(envPrefix) > 0 {
-		viper.SetEnvPrefix(envPrefix)
-	}
-
-	viper.SetConfigFile(configPath)
-
-	if err := viper.ReadInConfig(); err != nil {
-		if err, ok := err.(*os.PathError); !ok {
-			return nil, err
-		}
-	}
-	return viper.GetViper(), nil
-}
 
 func setupZeroLogFieldName() {
 	zerolog.TimestampFieldName = "ts"
@@ -51,21 +30,6 @@ func setupZeroLogFieldName() {
 }
 
 func main() {
-	configPath, err := filepath.Abs(os.Args[1])
-	if err != nil {
-		panic(err)
-	}
-
-	if configPath == "" {
-		panic(`must had config file`)
-	}
-
-	fmt.Printf("config file path:%s.\n", configPath)
-
-	_, err = loadViper("", configPath)
-	if err != nil {
-		panic(err)
-	}
 
 	setupZeroLogFieldName()
 	zerologLevel := viper.GetString(`LOG.Level`)
@@ -92,3 +56,8 @@ func main() {
 		AllowCredentials: true}))
 	beego.Run()
 }
+
+//go:generate sh -c "echo 'package routers; import \"github.com/astaxie/beego\"; func init() {beego.BConfig.RunMode = beego.DEV}' > routers/0.go"
+//go:generate sh -c "echo 'package routers; import \"os\"; func init() {os.Exit(0)}' > routers/z.go"
+//go:generate go run $GOFILE conf/config.toml
+//go:generate sh -c "rm routers/0.go routers/z.go"

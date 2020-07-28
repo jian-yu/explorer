@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
+
 type mongoStore struct {
 	URL  string
 	Name string
@@ -19,8 +20,7 @@ func NewMongoStore() MgoOperator {
 	mgoURL := viper.GetString(`MongoDB.URL`)
 	mgoDBName := viper.GetString(`MongoDB.DBName`)
 	if mgoURL == "" || mgoDBName == "" {
-		log.Error().Str(`params`, "mongo url or name bot be empty").Msg(`NewMongoStore`)
-		return nil
+		log.Panic().Str(`params`, "mongo url or name bot be empty").Msg(`NewMongoStore`)
 	}
 	log.Debug().Interface(`mgoURL`, mgoURL).Msg(`NewMongoStore`)
 	log.Debug().Interface(`mgoDBName`, mgoDBName).Msg(`NewMongoStore`)

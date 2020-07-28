@@ -34,12 +34,16 @@ type powerEventErrMsg struct {
 	Msg  string `json:"msg"`
 }
 
+func (pwc *PowerEventController) URLMapping() {
+	pwc.Mapping("ValidatorPowerEvent", pwc.ValidatorPowerEvent)
+}
+
 // @Title Get
 // @Description get txs (delegate and undelegate)
 // @Success code 0
 // @Failure code 1
-// @router /
-func (pwc *PowerEventController) Get() {
+// @router /validatorPowerEvent [get]
+func (pwc *PowerEventController) ValidatorPowerEvent() {
 	pwc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", pwc.Ctx.Request.Header.Get("Origin"))
 	address := pwc.GetString("address", "")
 	page, _ := pwc.GetInt("page", 0)

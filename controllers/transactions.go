@@ -26,12 +26,16 @@ type TxBlocks struct {
 	Msg   string   `json:"msg"`
 }
 
+func (txs *TxsController) URLMapping() {
+	txs.Mapping("Txs", txs.Txs)
+}
+
 // @Title 获取tx列表
 // @Description 默认获取after head的5个tx
 // @Success code 0
 // @Failure code 1
-// @router /
-func (txs *TxsController) Get() {
+// @router /txs [get]
+func (txs *TxsController) Txs() {
 	txs.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", txs.Ctx.Request.Header.Get("Origin"))
 	//var txList model.Txs
 	var respJSON TxBlocks

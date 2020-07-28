@@ -28,12 +28,16 @@ type BlockSimple struct {
 	Time      string `json:"time"`
 }
 
+func (bc *BlockController) URLMapping() {
+	bc.Mapping("Blocks", bc.Blocks)
+}
+
 // @Title 获取区快
 // @Description 默认获取after head的20个区块详细信息
 // @Success code 0
 // @Failure code 1
-// @router /
-func (bc *BlockController) Get() {
+// @router /blocks [get]
+func (bc *BlockController) Blocks() {
 	bc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bc.Ctx.Request.Header.Get("Origin"))
 	head, _ := bc.GetInt("head", 0)
 	page, _ := bc.GetInt("page", 0)

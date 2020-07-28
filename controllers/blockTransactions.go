@@ -9,12 +9,16 @@ type BlockTxController struct {
 	Base *BaseController
 }
 
+func (btc *BlockTxController) URLMapping() {
+	btc.Mapping("BlockTxs", btc.BlockTxs)
+}
+
 // @Title
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /
-func (btc *BlockTxController) Get() {
+// @router /blockTxs [get]
+func (btc *BlockTxController) BlockTxs() {
 	btc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", btc.Ctx.Request.Header.Get("Origin"))
 	var respJSON TxBlocks
 	head, _ := btc.GetInt("head")

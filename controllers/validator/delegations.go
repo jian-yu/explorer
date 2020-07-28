@@ -33,12 +33,16 @@ type Delegations struct {
 	AmountPercentage float64 `json:"share"`
 }
 
+func (dc *DelegationsController) URLMapping() {
+	dc.Mapping("ValidatorDelegations", dc.ValidatorDelegations)
+}
+
 // @Title Get
 // @Description get delegations
 // @Success code 0
 // @Failure code 1
-// @router /
-func (dc *DelegationsController) Get() {
+// @router /validatorDelegations [get]
+func (dc *DelegationsController) ValidatorDelegations() {
 	dc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", dc.Ctx.Request.Header.Get("Origin"))
 	address := dc.GetString("address")
 	page, _ := dc.GetInt("page", 0)

@@ -27,12 +27,16 @@ type BlockSimple struct {
 	Time      string `json:"time"`
 }
 
+func (pbc *ProposedBlocksController) URLMapping() {
+	pbc.Mapping("ValidatorProposedBlock", pbc.ValidatorProposedBlock)
+}
+
 // @Title Get
 // @Description get proposedBlocks
 // @Success code 0
 // @Failure code 1
-// @router /
-func (pbc *ProposedBlocksController) Get() {
+// @router /validatorProposedBlock [get]
+func (pbc *ProposedBlocksController) ValidatorProposedBlock() {
 	pbc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", pbc.Ctx.Request.Header.Get("Origin"))
 	address := pbc.GetString("address")
 	head, _ := pbc.GetInt("head", 0)
