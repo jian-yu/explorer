@@ -1,9 +1,11 @@
 package account
 
 import (
+	"encoding/json"
 	"explorer/controllers"
 	"explorer/handler"
 	"explorer/model"
+	"strconv"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -25,6 +27,22 @@ type baseInfoMsg struct {
 	Data model.BaseInfo `json:"data"`
 	Msg  string         `json:"msg"`
 	Code string         `json:"code"`
+}
+
+type Account struct {
+	Address       string          `json:"address"`
+	PublicKey     json.RawMessage `json:"public_key"`
+	AccountNumber int64           `json:"account_number"`
+	Sequence      int64           `json:"sequence"`
+	Flags         uint64          `json:"flags"`
+	Balances      []AccountToken  `json:"balances"`
+}
+
+type AccountToken struct {
+	Symbol string `json:"symbol"`
+	Free   string `json:"free"`
+	Locked string `json:"locked"`
+	Frozen string `json:"frozen"`
 }
 
 func (bic *BaseInfoController) URLMapping() {
@@ -73,10 +91,39 @@ func (bic *BaseInfoController) AccountInfo() {
 // @Description
 // @Success code 0
 // @Failure code 1
-// @router /account [get]
+// @router /account/:address [get]
 func (bic *BaseInfoController) Account() {
 	bic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bic.Ctx.Request.Header.Get("Origin"))
 
+	address := bic.Ctx.Input.Param("address")
+	if address == "" {
+		bic.Data["json"] = &Account{}
+		bic.ServeJSON()
+		return
+	}
+
+	info := bic.AccountHandler.Account(address)
+
+	an, _ := strconv.ParseInt(info.Detail.Result.Value.AccountNumber, 10, 64)
+	seq, _ := strconv.ParseInt(info.Detail.Result.Value.Sequence, 10, 64)
+
+	free := info.Tokens.Available[0].String()
+	locked := info.Tokens.Unbonding[0].String()
+	frozen := info.Tokens.Delegated[0].String()
+
+	account := &Account{
+		Address:       info.BaseInfo.Address,
+		PublicKey:     nil,
+		AccountNumber: an,
+		Sequence:      seq,
+		Flags:         0,
+		Balances: []AccountToken{
+			{Symbol: "hst", Free: free, Locked: locked, Frozen: frozen},
+		},
+	}
+
+	bic.Data["json"] = account
+	bic.ServeJSON()
 }
 
 func (bic *BaseInfoController) getDeciamlRewardAmount(address string) decimal.Decimal {

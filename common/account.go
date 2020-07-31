@@ -76,6 +76,22 @@ func (a *account) GetInfo(address string) (string, string) {
 	return account.Result.Value.Address, Token
 }
 
+func (a *account) GetExtraInfo(address string) *model.Account {
+	var account model.Account
+	var httpClient = resty.New()
+	lcdURL := viper.GetString(`LCD.URL`)
+
+	url := lcdURL + "/auth/accounts/" + address
+	rsp, err := httpClient.R().EnableTrace().Get(url)
+	if err != nil {
+		logger.Err(err).Interface(`url`, url).Msg(`GetInfo`)
+		return nil
+	}
+	_ = json.Unmarshal(rsp.Body(), &account)
+
+	return &account
+}
+
 func (a *account) GetWithDrawAddress(address string) string {
 	var withdrawAddress model.WithdrawAddress
 	var httpClient = resty.New()
@@ -111,7 +127,7 @@ func (a *account) GetDelegator(address string) *model.DelegatorExtra {
 
 	err = json.Unmarshal(rsp.Body(), &delegators)
 	if err != nil {
-		logger.Err(err).Interface(`rsp`, rsp).Interface(`url`,url).Msg(`GetDelegator`)
+		logger.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetDelegator`)
 	}
 
 	for index, item := range delegators.Result {

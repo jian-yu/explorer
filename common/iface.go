@@ -77,4 +77,5 @@ type Account interface {
 	GetDelegator(address string) *model.DelegatorExtra
 	GetDelegateReward(address string) string
 	GetUnbonding(address string) *model.Unbonding
+	GetExtraInfo(address string) *model.Account
 }

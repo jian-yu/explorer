@@ -11,8 +11,9 @@ type AccountHandler struct {
 }
 
 type AccountInfo struct {
-	baseInfo model.BaseInfo
-	tokens   Tokens
+	Detail   *model.Account
+	BaseInfo *model.BaseInfo
+	Tokens   *Tokens
 }
 
 type Tokens struct {
@@ -35,7 +36,7 @@ func NewAccountHandler(
 	}
 }
 
-func (a *AccountHandler) Account(address string) AccountInfo {
+func (a *AccountHandler) Account(address string) *AccountInfo {
 	var baseInfo model.BaseInfo
 
 	tokens := a.AccountTokenInfo(address)
@@ -47,9 +48,10 @@ func (a *AccountHandler) Account(address string) AccountInfo {
 	baseInfo.TotalPrice, _ = tokens.TotalAmount[0].Mul(decimalPrice).Float64()
 	baseInfo.Price, _ = decimalPrice.Float64()
 
-	return AccountInfo{
-		baseInfo: baseInfo,
-		tokens:   tokens,
+	return &AccountInfo{
+		BaseInfo: &baseInfo,
+		Tokens:   &tokens,
+		Detail:   a.base.Account.GetExtraInfo(address),
 	}
 }
 
