@@ -2,6 +2,7 @@ package account
 
 import (
 	"explorer/controllers"
+	"explorer/handler"
 	"explorer/model"
 	"strings"
 
@@ -13,6 +14,7 @@ type BaseInfoController struct {
 	beego.Controller
 	Base *controllers.BaseController
 	*KindsRewardController
+	*handler.AccountHandler
 }
 type baseInfoerrMsg struct {
 	Data error  `json:"data"`
@@ -27,6 +29,7 @@ type baseInfoMsg struct {
 
 func (bic *BaseInfoController) URLMapping() {
 	bic.Mapping("AccountInfo", bic.AccountInfo)
+	bic.Mapping("Account", bic.Account)
 }
 
 /**/
@@ -47,9 +50,7 @@ func (bic *BaseInfoController) AccountInfo() {
 	} else {
 		//获取验证人账户信息和获取提款地址
 		var baseInfo model.BaseInfo
-		//var account model.Account
-		//var withdrawAddress model.WithdrawAddress
-		//var price model.Information
+
 		decimalPrice, _ := decimal.NewFromString(bic.Base.Custom.GetInfo().Price)
 		var msg baseInfoMsg
 		baseInfo.Address, _ = bic.Base.Account.GetInfo(address)
@@ -66,6 +67,18 @@ func (bic *BaseInfoController) AccountInfo() {
 	bic.ServeJSON()
 
 }
+
+/**/
+// @Title
+// @Description
+// @Success code 0
+// @Failure code 1
+// @router /account [get]
+func (bic *BaseInfoController) Account() {
+	bic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bic.Ctx.Request.Header.Get("Origin"))
+
+}
+
 func (bic *BaseInfoController) getDeciamlRewardAmount(address string) decimal.Decimal {
 	//var delegateReward model.DelegateRewards
 	amount := bic.Base.Account.GetDelegateReward(address)

@@ -37,6 +37,8 @@ func init() {
 	baseHandler := handler.NewBaseHandler(mgoStore)
 	delegationHandler := handler.NewDelegationsHandler(baseHandler)
 	validatorHandler := handler.NewValidatorHandler(baseHandler, delegationHandler)
+	tokensHandler := handler.NewTokenHandler(baseHandler)
+	accountHandler := handler.NewAccountHandler(baseHandler, tokensHandler)
 
 	krc := &account.KindsRewardController{Base: baseController}
 
@@ -101,7 +103,7 @@ func init() {
 		),
 		beego.NSNamespace("/v1",
 			beego.NSInclude(
-				&account.BaseInfoController{Base: baseController, KindsRewardController: krc},
+				&account.BaseInfoController{Base: baseController, KindsRewardController: krc, AccountHandler: accountHandler},
 			),
 		),
 		beego.NSNamespace("/v1",
