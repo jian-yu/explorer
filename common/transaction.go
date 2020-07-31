@@ -155,8 +155,8 @@ func (t *transaction) GetDelegatorRewardTx(address string) *[]model.Txs {
 	_ = conn.C("Txs").Find(bson.M{"$or": query, "delegatoraddress": bson.M{"$elemMatch": bson.M{"$eq": address}}}).All(&txsSet)
 	return &txsSet
 }
-func (t *transaction) GetSpecifiedHeight(head int, page int, size int) ([]model.Txs, int) {
-	var TxsSet = make([]model.Txs, size)
+func (t *transaction) GetSpecifiedHeight(head int, page int, size int) ([]*model.Txs, int) {
+	var TxsSet = make([]*model.Txs, size)
 
 	if page <= 0 {
 		// default page

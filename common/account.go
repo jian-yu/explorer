@@ -111,7 +111,7 @@ func (a *account) GetDelegator(address string) *model.DelegatorExtra {
 
 	err = json.Unmarshal(rsp.Body(), &delegators)
 	if err != nil {
-		logger.Err(err).Interface(`rsp`, rsp).Msg(`GetDelegator`)
+		logger.Err(err).Interface(`rsp`, rsp).Interface(`url`,url).Msg(`GetDelegator`)
 	}
 
 	for index, item := range delegators.Result {

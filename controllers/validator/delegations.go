@@ -73,7 +73,7 @@ func (dc *DelegationsController) ValidatorDelegations() {
 	//items, totalDelegations := delegations.GetInfo(address, page, size)
 	oneDayAgoDelegations := dc.Base.Delegator.GetDelegatorCount(address)
 	//oneDayAgoDelegations := validatorDelegationNums.GetInfo(address)
-	for _, item := range *items {
+	for _, item := range items {
 		respJSONDelegation.Amount = getShares(items, item.DelegatorAddress)
 		respJSONDelegation.Address = item.DelegatorAddress
 		respJSONDelegation.AmountPercentage = getPercentage(respJSONDelegation.Amount, validatorBaseInfo.TotalToken)
@@ -89,9 +89,9 @@ func (dc *DelegationsController) ValidatorDelegations() {
 	dc.ServeJSON()
 }
 
-func getShares(items *[]model.DelegatorObj, address string) float64 {
+func getShares(items []*model.DelegatorObj, address string) float64 {
 	var amount float64
-	for _, item := range *items {
+	for _, item := range items {
 		if item.DelegatorAddress == address {
 			share := item.Shares
 			amount = amount + share

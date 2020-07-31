@@ -231,22 +231,36 @@ func (a *action) getTxs(url string, chainName string, types string) {
 		httpCli := resty.New()
 		rsp, err := httpCli.R().Get(url)
 		if err != nil {
-			log.Err(err).Interface(`url`, url).Msg(`getTxs`)
+			logger.Err(err).Interface(`url`, url).Msg(`getTxs`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
 		var txsInfo model.Txs
 		jsonObj, err := simplejson.NewJson(rsp.Body())
-		if err != nil {
-			log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
-		}
-		jsonTxs, _ := jsonObj.Get("txs").Array()
-		txsError, _ := jsonObj.Get("error").String()
-		if txsError != "" {
+		if err != nil  || jsonObj == nil{
+			logger.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
 			break
 		}
 
+		if jsonObj.Get("txs") == nil {
+			logger.Warn().Interface(`url`, url).Msg(`getTxs`)
+			break
+		}
+
+		jsonTxs, _ := jsonObj.Get("txs").Array()
 		lenTxs := len(jsonTxs)
+
+		if lenTxs == 0 {
+			logger.Warn().Interface(`url`, url).Str(`txs`,`txs len == 0`).Msg(`getTxs`)
+			break
+		}
+
+		jsonErr, _ := jsonObj.Get("error").String()
+		if jsonErr != "" {
+			logger.Warn().Interface(`url`, url).Interface(`errStr`, jsonErr).Msg(`getTxs`)
+			break
+		}
+
 
 		for i := 0; i < lenTxs; i++ {
 			hash, _ := jsonObj.Get("txs").GetIndex(i).Get("txhash").String()

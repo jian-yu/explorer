@@ -1,33 +1,28 @@
 package controllers
 
 import (
-	"explorer/model"
-
+	"explorer/handler"
 	"github.com/astaxie/beego"
 )
 
 type ValidatorsController struct {
 	beego.Controller
-	Base *BaseController
+	*handler.ValidatorHandler
 }
+
+func (vc *ValidatorsController) URLMapping() {
+	vc.Mapping("Validators", vc.Validators)
+}
+
 type MSGS struct {
-	Code string            `json:"code"`
-	Data ValidatorTypeList `json:"data"`
-	Msg  string            `json:"msg"`
+	Code string      `json:"code"`
+	Data interface{} `json:"data"`
+	Msg  string      `json:"msg"`
 }
 type errMsg struct {
 	Code string `json:"code"`
 	Data error  `json:"data"`
 	Msg  string `json:"msg"`
-}
-type ValidatorTypeList struct {
-	Jailed    []model.ValidatorInfo `json:"jailed"`
-	Active    []model.ValidatorInfo `json:"active"`
-	Candidate []model.ValidatorInfo `json:"candidate"`
-}
-
-func (vc *ValidatorsController) URLMapping() {
-	vc.Mapping("Validators", vc.Validators)
 }
 
 // @Title 获取Validators List
@@ -37,77 +32,23 @@ func (vc *ValidatorsController) URLMapping() {
 // @router /validators [get]
 func (vc *ValidatorsController) Validators() {
 	vc.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", vc.Ctx.Request.Header.Get("Origin"))
-	types := vc.GetString("type", "")
-	//var validatorInfo models.ValidatorInfo
-	var vtl ValidatorTypeList
-	var normallyValidatorList []model.ValidatorInfo
-	var count int
-	//list := validatorInfo.GetInfo()
-	list := vc.Base.Validator.GetInfo()
-	if len(*list) == 0 {
-		var errMsg errMsg
-		errMsg.Data = nil
-		errMsg.Code = "1"
-		errMsg.Msg = "No Record!"
-		vc.Data["json"] = errMsg
-		vc.ServeJSON()
-	}
-	for _, item := range *list {
-		if item.Jailed {
-			lenJailedList := len(vtl.Jailed)
-			if lenJailedList == 0 {
-				item.Cumulative = item.VotingPower.Percent
-			} else {
-				aheadItemInJailedList := lenJailedList - 1
-				item.Cumulative = vtl.Jailed[aheadItemInJailedList].Cumulative + item.VotingPower.Percent
-			}
-			vtl.Jailed = append(vtl.Jailed, item)
-		} else {
-			lenNormallyValidatorList := len(normallyValidatorList)
+	typo := vc.GetString("type", "")
 
-			if len(normallyValidatorList) > 0 {
-				aheadItemInNormallyList := lenNormallyValidatorList - 1
-				item.Cumulative = normallyValidatorList[aheadItemInNormallyList].Cumulative + item.VotingPower.Percent
-			} else {
-				item.Cumulative = item.VotingPower.Percent
-			}
-			normallyValidatorList = append(normallyValidatorList, item)
-			if count < 100 {
-				vtl.Active = append(vtl.Active, item)
-				count++
-			} else {
-				vtl.Candidate = append(vtl.Candidate, item)
-			}
-		}
-	}
+	validatorList := vc.ValidatorHandler.Validators(typo)
 
-	//if item.Status == 2 {
-	//	vtl.Active = append(vtl.Active, item)
-	//	count++
-	//} else if item.Status == 0 {
-	//	vtl.Candidate = append(vtl.Candidate, item)
-	//}
 	var msgs MSGS
 	msgs.Code = "0"
 	msgs.Msg = "OK"
-	switch types {
-	case "":
-		msgs.Data = vtl
-	case "jailed":
-		msgs.Data.Jailed = vtl.Jailed
-	case "active":
-		msgs.Data.Active = vtl.Active
-	case "candidate":
-		msgs.Data.Candidate = vtl.Candidate
-	default:
+	if len(validatorList) == 0 {
 		var errMsg errMsg
 		errMsg.Data = nil
 		errMsg.Code = "1"
 		errMsg.Msg = "No Record!"
 		vc.Data["json"] = errMsg
 		vc.ServeJSON()
+		return
 	}
-
+	msgs.Data = validatorList
 	vc.Data["json"] = msgs
 	vc.ServeJSON()
 }

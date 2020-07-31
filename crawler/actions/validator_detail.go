@@ -54,7 +54,7 @@ func (a *action) GetDelegations() {
 		//var validators model.ValidatorInfo
 		// get validator info
 		vaList := a.Validator.GetInfo() //vaList == validators List
-		if len(*vaList) == 0 {
+		if len(vaList) == 0 {
 			time.Sleep(time.Second * 4)
 			errorCount++
 			if errorCount >= 5 {
@@ -67,7 +67,7 @@ func (a *action) GetDelegations() {
 				errorCount--
 			}
 		}
-		for _, item := range *vaList {
+		for _, item := range vaList {
 			address := item.ValidatorAddress
 			url := a.LcdURL + "/staking/validators/" + address + "/delegations"
 			//log.Debug().Interface(`url`,url).Msg(`GetDelegations`)
@@ -126,12 +126,12 @@ func (a *action) updateInsertDelegatorData() error {
 	var validatorDelegationNums model.ValidatorDelegatorNums
 	// get validator info
 	vaList := a.Validator.GetInfo() //vaList == validators List
-	if len(*vaList) == 0 {
+	if len(vaList) == 0 {
 		time.Sleep(time.Second * 4)
 		return errors.New("validator list is empty")
 	}
 
-	for _, item := range *vaList {
+	for _, item := range vaList {
 		address := item.ValidatorAddress
 		url := a.LcdURL + "/staking/validators/" + address + "/delegations"
 

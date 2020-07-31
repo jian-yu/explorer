@@ -1,24 +1,25 @@
 package model
 
 type BlockInfo struct {
-	BlockMeta BlockMeta `json:"block_meta"`
-	Block     Block     `json:"block"`
-	IntHeight int       `json:"int_height"`
+	BlockMeta BlockMeta `json:"block_meta,omitempty"`
+	Block     Block     `json:"block,omitempty"`
+	IntHeight int       `json:"int_height,omitempty"`
 }
 
 type BlockMeta struct {
 	BlockID BlockID `json:"block_id"`
+	Header  Header  `json:"header"`
 }
 type Block struct {
-	Header Header `json:"header"`
-	//Data       Data       `json:"data"`
-	//Evidence   Evidence   `json:"evidence"`
-	//LastCommit LastCommit `json:"last_commit"`
+	Header     Header     `json:"header"`
+	Data       Data       `json:"data"`
+	Evidence   Evidence   `json:"evidence"`
+	LastCommit LastCommit `json:"last_commit"`
 }
 
 type BlockID struct {
-	Hash string `json:"hash"`
-	//Parts Parts  `json:"parts"`
+	Hash  string `json:"hash"`
+	Parts Parts  `json:"parts"`
 }
 type Parts struct {
 	Total string `json:"total"`
@@ -26,22 +27,22 @@ type Parts struct {
 }
 
 type Header struct {
-	//Version            Version `json:"version"`
-	//ChainId            string  `json:"chain_id"`
-	Height      string  `json:"height"`
-	Time        string  `json:"time"` //p
-	NumTxs      string  `json:"num_txs"`
-	TotalTxs    string  `json:"total_txs"`
-	LastBlockID BlockID `json:"last_block_id"`
-	//LastCommitHash     string  `json:"last_commit_hash"`
-	//DataHash           string  `json:"data_hash"`
-	ValidatorsHash string `json:"validators_hash"`
-	//NextValidatorsHash string  `json:"next_validators_hash"`
-	//ConsensusHash      string  `json:"consensus_hash"`
-	//AppHash            string  `json:"app_hash"`
-	//LastResultHash     string  `json:"last_result_hash"`
-	//EvidenceHash       string  `json:"evidence_hash"`
-	ProposerAddress string `json:"proposer_address"`
+	Version            Version `json:"version"`
+	ChainId            string  `json:"chain_id"`
+	Height             string  `json:"height"`
+	Time               string  `json:"time"`
+	NumTxs             string  `json:"num_txs"`
+	TotalTxs           string  `json:"total_txs"`
+	LastBlockID        BlockID `json:"last_block_id"`
+	LastCommitHash     string  `json:"last_commit_hash"`
+	DataHash           string  `json:"data_hash"`
+	ValidatorsHash     string  `json:"validators_hash"`
+	NextValidatorsHash string  `json:"next_validators_hash"`
+	ConsensusHash      string  `json:"consensus_hash"`
+	AppHash            string  `json:"app_hash"`
+	LastResultHash     string  `json:"last_result_hash"`
+	EvidenceHash       string  `json:"evidence_hash"`
+	ProposerAddress    string  `json:"proposer_address"`
 }
 type Version struct {
 	Block string `json:"block"`

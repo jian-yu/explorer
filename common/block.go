@@ -17,7 +17,7 @@ func NewBlock(m db.MgoOperator) Block {
 	}
 }
 
-func (b *block) SetBlock(block model.BlockInfo) {
+func (b *block) SetBlock(block *model.BlockInfo) {
 	conn := b.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
@@ -57,4 +57,14 @@ func (b *block) GetBlockListIfHasTx(height int) []model.BlocksHeights {
 
 	_ = conn.C("block").Find(bson.M{"intheight": bson.M{"$gte": height}, "block.header.numtxs": bson.M{"$ne": "0"}}).All(&heights)
 	return heights
+}
+
+func (b *block) GetLastBlockHeight() int {
+	var block model.BlockInfo
+	conn := b.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	_ = conn.C("block").Find(nil).Sort("-intheight").One(&block)
+
+	return block.IntHeight
 }

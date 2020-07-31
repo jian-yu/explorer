@@ -10,8 +10,10 @@ package routers
 import (
 	"explorer/controllers"
 	"explorer/controllers/account"
+	"explorer/controllers/asset"
 	"explorer/controllers/validator"
 	"explorer/db"
+	"explorer/handler"
 	"explorer/utils"
 	"github.com/astaxie/beego"
 	"github.com/spf13/viper"
@@ -20,7 +22,6 @@ import (
 )
 
 func init() {
-
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	configPath := os.Getenv(`explorer_config_path`)
@@ -32,6 +33,10 @@ func init() {
 
 	mgoStore := db.NewMongoStore()
 	baseController := controllers.NewBaseController(mgoStore)
+
+	baseHandler := handler.NewBaseHandler(mgoStore)
+	delegationHandler := handler.NewDelegationsHandler(baseHandler)
+	validatorHandler := handler.NewValidatorHandler(baseHandler, delegationHandler)
 
 	krc := &account.KindsRewardController{Base: baseController}
 
@@ -70,7 +75,7 @@ func init() {
 		),
 		beego.NSNamespace("/v1",
 			beego.NSInclude(
-				&controllers.ValidatorsController{Base: baseController},
+				&controllers.ValidatorsController{ValidatorHandler: validatorHandler},
 			),
 			//beego.NSRouter("/", &controllers.ValidatorsController{}),
 		),
@@ -116,6 +121,9 @@ func init() {
 		),
 		beego.NSNamespace("/v1",
 			beego.NSInclude(krc),
+		),
+		beego.NSNamespace("v1",
+			beego.NSInclude(&asset.Controller{ValidatorHandler: validatorHandler}),
 		),
 	)
 

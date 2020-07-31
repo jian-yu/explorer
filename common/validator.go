@@ -30,13 +30,13 @@ func (v *validator) SetInfo(info model.ValidatorInfo) {
 	}
 }
 
-func (v *validator) GetInfo() *[]model.ValidatorInfo {
-	var list []model.ValidatorInfo
+func (v *validator) GetInfo() []*model.ValidatorInfo {
+	var list []*model.ValidatorInfo
 	conn := v.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
 	_ = conn.C("validators").Find(nil).Sort("-votingpower.amount").All(&list)
-	return &list
+	return list
 }
 
 func (v *validator) DeleteAllInfo() {

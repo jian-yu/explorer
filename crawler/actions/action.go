@@ -19,6 +19,8 @@ import (
 var tokenPrice string
 var fiveMinAgo time.Time
 
+var logger = log.With().Caller().Logger()
+
 type action struct {
 	LcdURL            string
 	RPCURL            string
@@ -378,7 +380,7 @@ func (a *action) GetPublic() {
 		price := a.getPriceFormDragonex()
 		height, pledgen, total, err := a.pledgenAndTotal()
 		if err != nil {
-			log.Err(err).Msg(`pledgenAndTotalHsn`)
+			log.Err(err).Msg(`pledgenAndTotal`)
 			time.Sleep(time.Second * 4)
 			continue
 		}
@@ -419,30 +421,52 @@ func (a *action) GetPublic() {
 func (a *action) GetBlock() {
 	var block model.BlockInfo
 	for {
-		lastBlockHeight, publicHeight := a.Block.GetAimHeightAndBlockHeight()
-		//check the height difference again
-		if publicHeight > lastBlockHeight {
-			for publicHeight > lastBlockHeight {
-				lastBlockHeight = lastBlockHeight + 1
 
-				url := a.LcdURL + "/blocks/" + strconv.Itoa(lastBlockHeight)
-				rsp, err := a.Client.R().Get(url)
-				if err != nil {
-					log.Err(err).Interface(`url`, url).Msg(`GetBlock`)
-					lastBlockHeight = lastBlockHeight - 1
-					time.Sleep(time.Second * 2)
-					continue
-				}
-				err = json.Unmarshal(rsp.Body(), &block)
-				if err != nil {
-					log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetBlock`)
-					time.Sleep(time.Second * 2)
-					continue
-				}
-				a.Block.SetBlock(block)
-			}
+		currentBlockHeight := a.Block.GetLastBlockHeight()
+		url := a.LcdURL + "/blocks/latest"
+		rsp, err := a.Client.R().Get(url)
+		if err != nil {
+			log.Err(err).Interface(`url`, url).Msg(`GetBlock`)
+			time.Sleep(time.Second * 2)
+			continue
 		}
-		time.Sleep(time.Second * 1)
+		err = json.Unmarshal(rsp.Body(), &block)
+		if err != nil {
+			log.Err(err).Interface(`url`, url).Interface(`rsp`, rsp).Msg(`GetBlock`)
+			time.Sleep(time.Second * 2)
+			continue
+		}
+
+		lastBlockHeight, _ := strconv.Atoi(block.Block.Header.Height)
+		if lastBlockHeight-currentBlockHeight <= 0 {
+			log.Info().Str(`block`, `not more block info`).Msg(`GetBlock`)
+			time.Sleep(time.Second * 2)
+			continue
+		}
+
+		for currentBlockHeight = currentBlockHeight + 1; currentBlockHeight < lastBlockHeight; currentBlockHeight++ {
+			log.Info().Interface(`height`, currentBlockHeight).Msg(`sync block`)
+			url := a.LcdURL + "/blocks/" + strconv.Itoa(currentBlockHeight)
+			rsp, err := a.Client.R().Get(url)
+			if err != nil {
+				log.Err(err).Interface(`url`, url).Msg(`GetBlock`)
+				lastBlockHeight = lastBlockHeight - 1
+				time.Sleep(time.Second * 2)
+				currentBlockHeight--
+				continue
+			}
+			err = json.Unmarshal(rsp.Body(), &block)
+			if err != nil {
+				log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`GetBlock`)
+				time.Sleep(time.Second * 2)
+				currentBlockHeight--
+				continue
+			}
+
+			block.IntHeight, _ = strconv.Atoi(block.Block.Header.Height)
+			a.Block.SetBlock(&block)
+		}
+		time.Sleep(time.Second * 4)
 	}
 }
 

@@ -7,11 +7,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var logger = log.With().Logger()
+var logger = log.With().Caller().Logger()
 
 type Validator interface {
 	SetInfo(info model.ValidatorInfo)
-	GetInfo() *[]model.ValidatorInfo
+	GetInfo() []*model.ValidatorInfo
 	DeleteAllInfo()
 	GetOne(address string) *model.ValidatorInfo
 	GetValidatorRank(amount float64, jailed bool) int
@@ -23,9 +23,10 @@ type Validator interface {
 }
 
 type Block interface {
-	SetBlock(b model.BlockInfo)
+	SetBlock(b *model.BlockInfo)
 	GetAimHeightAndBlockHeight() (int, int)
 	GetBlockListIfHasTx(height int) []model.BlocksHeights
+	GetLastBlockHeight()int
 }
 
 type Custom interface {
@@ -44,7 +45,7 @@ type Transaction interface {
 	GetDelegatorTxs(address string, page, size int) (*[]model.Txs, int)
 	GetDelegatorCommissionTx(address string) *[]model.Txs
 	GetDelegatorRewardTx(address string) *[]model.Txs
-	GetSpecifiedHeight(head int, page int, size int) ([]model.Txs, int)
+	GetSpecifiedHeight(head int, page int, size int) ([]*model.Txs, int)
 	GetTxHeight(tx model.Txs) int
 }
 
@@ -63,7 +64,7 @@ type ValidatorDetail interface {
 }
 
 type Delegator interface {
-	GetInfo(address string, page int, size int) (*[]model.DelegatorObj, int)
+	GetInfo(address string, page int, size int) ([]*model.DelegatorObj, int)
 	SetInfo(delegator model.DelegatorObj)
 	SetDelegatorCount(vDelegator model.ValidatorDelegatorNums)
 	GetDelegatorCount(address string) int

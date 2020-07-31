@@ -42,6 +42,8 @@ func (a *action) GetTxs2() {
 				err := a.getTxs2(nowHeight, a.LcdURL, a.ChainName)
 				if err == nil {
 					index++
+				} else {
+					logger.Err(err).Msg(`GetTxs2`)
 				}
 			}
 		}
@@ -63,16 +65,27 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 		return err
 	}
 	jsonObj, err := simplejson.NewJson(rsp.Body())
-	if err != nil {
+	if err != nil || jsonObj == nil {
 		log.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
-	}
-	jsonTxs, _ := jsonObj.Get("txs").Array()
-	txsError, _ := jsonObj.Get("error").String()
-	if txsError != "" {
-		log.Err(errors.New(txsError)).Msg(`getTxs2`)
+		return err
 	}
 
+	if jsonObj.Get("txs") == nil {
+		return errors.New(`txs is nil`)
+	}
+
+	jsonTxs, _ := jsonObj.Get("txs").Array()
 	lenTxs := len(jsonTxs)
+
+	if lenTxs == 0 {
+		return errors.New(`txs len == 0`)
+	}
+
+	jsonErr, _ := jsonObj.Get("error").String()
+	if jsonErr != "" {
+		return errors.New(jsonErr)
+	}
+
 	for i := 0; i < lenTxs; i++ {
 		hash, _ := jsonObj.Get("txs").GetIndex(i).Get("txhash").String()
 		flage := a.Transaction.CheckHash(hash)
@@ -344,4 +357,3 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 	//page++
 	return nil
 }
-
