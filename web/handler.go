@@ -34,6 +34,7 @@ func NewWebHandler(
 	router.GET("/asset", wh.handleAssetName)
 	router.GET("/assets", wh.handleAssets)
 	router.GET("/asset-holders", wh.handleAssetHolder)
+	router.GET("/account/:address", wh.handleAccount)
 
 	return wh
 }
@@ -197,4 +198,38 @@ func (wh *webHandler) handleAssetHolder(ctx *gin.Context) {
 	assetHolders.AddressHolders = addrHolders
 
 	ctx.JSON(http.StatusOK, assetHolders)
+}
+
+func (wh *webHandler) handleAccount(ctx *gin.Context){
+	var p struct{
+		Address string `uri:"address" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindUri(&p); err !=nil{
+		log.Err(err).Msg(`handleAccount`)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest,NewWebError(-24001,"not found account address"))
+		return
+	}
+
+	info := wh.accountHandler.Account(p.Address)
+
+	an, _ := strconv.ParseInt(info.Detail.Result.Value.AccountNumber, 10, 64)
+	seq, _ := strconv.ParseInt(info.Detail.Result.Value.Sequence, 10, 64)
+
+	free := info.Tokens.Available[0].String()
+	locked := info.Tokens.Unbonding[0].String()
+	frozen := info.Tokens.Delegated[0].String()
+
+	account := &Account{
+		Address:       info.BaseInfo.Address,
+		PublicKey:     nil,
+		AccountNumber: an,
+		Sequence:      seq,
+		Flags:         0,
+		Balances: []AccountToken{
+			{Symbol: "hst", Free: free, Locked: locked, Frozen: frozen},
+		},
+	}
+
+	ctx.JSON(http.StatusOK,account)
 }
