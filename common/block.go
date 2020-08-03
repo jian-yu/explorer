@@ -68,3 +68,33 @@ func (b *block) GetLastBlockHeight() int {
 
 	return block.IntHeight
 }
+
+func (b *block) GetBlocks(before, after, limit int) []*model.BlockInfo {
+	var blocks = make([]*model.BlockInfo, limit)
+
+	conn := b.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	switch {
+	case before > 0:
+		_ = conn.C("block").Find(nil).Sort("-intheight").Limit(before).All(&blocks)
+		if len(blocks) > limit {
+			blocks = blocks[:limit]
+		}
+	case after >= 0:
+		_ = conn.C("block").Find(nil).Sort("-intheight").Skip(after).Limit(limit).All(&blocks)
+	default:
+		_ = conn.C("block").Find(nil).Sort("-intheight").Limit(limit).All(&blocks)
+	}
+
+	return blocks
+}
+
+func (b *block) GetLatestBlock() model.BlockInfo {
+	var block model.BlockInfo
+	conn := b.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	_ = conn.C("block").Find(nil).Sort("-intheight").One(&block)
+	return block
+}

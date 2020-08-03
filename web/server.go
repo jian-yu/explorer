@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Server interface {
+type Daemon interface {
 	Start() error
 	Stop()
 }
@@ -15,7 +15,7 @@ type server struct {
 	*gin.Engine
 }
 
-func NewServer(engine *gin.Engine) Server {
+func NewServer(engine *gin.Engine) Daemon {
 	addr := viper.GetString(`Web.Addr`)
 	if addr == "" {
 		addr = ":8080"

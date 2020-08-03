@@ -1,19 +1,66 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"explorer/crawler"
+	"explorer/db"
+	"explorer/handler"
+	"explorer/utils"
+	"explorer/web"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 
-	_ "explorer/routers"
-
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/plugins/cors"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
+	"go.uber.org/fx"
 )
+
+type hooker struct{}
+
+func start(_ *hooker, _ web.Daemon, _ *web.HTTPHandler) {}
+func NewHooker(lc fx.Lifecycle, srv web.Daemon) *hooker {
+
+	var check = func(d web.Daemon, errChan chan error) {
+		err := d.Start()
+		if err == nil {
+			return
+		}
+
+		select {
+		case errChan <- err:
+		default:
+		}
+	}
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			errChan := make(chan error)
+
+			go check(srv, errChan)
+
+			select {
+			case e := <-errChan:
+				return errors.New(`start fail: ` + e.Error())
+			case <-time.After(time.Second * 2):
+				return nil
+			}
+		},
+
+		OnStop: func(ctx context.Context) error {
+			srv.Stop()
+			time.Sleep(time.Second)
+			return nil
+		},
+	})
+	return &hooker{}
+}
 
 func setupZeroLogFieldName() {
 	zerolog.TimestampFieldName = "ts"
@@ -30,6 +77,14 @@ func setupZeroLogFieldName() {
 }
 
 func main() {
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	configPath := os.Getenv(`explorer_config_path`)
+
+	_, err := utils.LoadViper("", configPath)
+	if err != nil {
+		panic(err)
+	}
 
 	setupZeroLogFieldName()
 	zerologLevel := viper.GetString(`LOG.Level`)
@@ -43,21 +98,24 @@ func main() {
 
 	crawler.OnStart()
 
-	if beego.BConfig.RunMode == "dev" {
-		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+	mgoStore := db.NewMongoStore()
 
-	}
-	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"https://*.foo.com"},
-		AllowMethods:     []string{"PUT", "PATCH"},
-		AllowHeaders:     []string{"Origin"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true}))
-	beego.Run()
+	engine := web.NewEngine()
+
+	app := fx.New(
+		fx.Provide(func() *gin.Engine { return engine }),
+		fx.Provide(func() db.MgoOperator { return mgoStore }),
+		fx.Provide(handler.NewBaseHandler),
+		fx.Provide(handler.NewDelegationsHandler),
+		fx.Provide(handler.NewValidatorHandler),
+		fx.Provide(handler.NewTokensHandler),
+		fx.Provide(handler.NewAccountHandler),
+		fx.Provide(handler.NewTransactionHandler),
+		fx.Provide(handler.NewBlockHandler),
+		fx.Provide(web.NewHTTPHandler),
+		fx.Provide(web.NewServer),
+		fx.Provide(NewHooker),
+		fx.Invoke(start),
+	)
+	app.Run()
 }
-
-//go:generate sh -c "echo 'package routers; import \"github.com/astaxie/beego\"; func init() {beego.BConfig.RunMode = beego.DEV}' > routers/0.go"
-//go:generate sh -c "echo 'package routers; import \"os\"; func init() {os.Exit(0)}' > routers/z.go"
-//go:generate go run $GOFILE conf/config.toml
-//go:generate sh -c "rm routers/0.go routers/z.go"

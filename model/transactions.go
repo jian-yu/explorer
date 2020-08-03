@@ -1,34 +1,40 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 )
 
 //http://172.38.8.89:1317/txs?message.action=send
 type Txs struct {
-	TxHash                  string    `json:"tx_hash"`
-	Page                    int       `json:"page"`
-	Type                    string    `json:"type"`
-	Result                  bool      `json:"result"`
-	Amount                  []float64 `json:"amount"`
-	Fee                     float64   `json:"fee"`
-	Height                  int       `json:"height"`
-	TxTime                  string    `json:"tx_time"`
-	Plus                    int       `json:"pluse"`
-	ValidatorAddress        []string  `json:"validator_address"`
-	DelegatorAddress        []string  `json:"delegator_address"`
-	WithDrawRewardAmout     []float64 `json:"with_draw_reward_amout"`
-	WithDrawCommissionAmout []float64 `json:"with_draw_commission_amout"`
-	FromAddress             []string  `json:"from_address"`
-	ToAddress               []string  `json:"to_address"`
-	OutPutsAddress          []string  `json:"out_puts_address"`
-	InputsAddress           []string  `json:"inputs_address"`
-	VoterAddress            []string  `json:"voter_address"`
-	Options                 []string  `json:"options"`
-	Time                    time.Time `json:"time"`
-	Data                    string    `json:"data"`
-	RawLog                  string    `json:"raw_log"`
-	Memo                    string    `json:"memo"`
+	TxHash                  string          `json:"tx_hash"`
+	Page                    int             `json:"page"`
+	Type                    string          `json:"type"`
+	RawType                 string          `json:"raw_type"`
+	Result                  bool            `json:"result"`
+	Amount                  []float64       `json:"amount"`
+	Fee                     float64         `json:"fee"`
+	Height                  int             `json:"height"`
+	TxTime                  int64           `json:"tx_time"`
+	Plus                    int             `json:"pluse"`
+	ValidatorAddress        []string        `json:"validator_address"`
+	DelegatorAddress        []string        `json:"delegator_address"`
+	WithDrawRewardAmout     []float64       `json:"with_draw_reward_amout"`
+	WithDrawCommissionAmout []float64       `json:"with_draw_commission_amout"`
+	FromAddress             []string        `json:"from_address"`
+	ToAddress               []string        `json:"to_address"`
+	OutPutsAddress          []string        `json:"out_puts_address"`
+	InputsAddress           []string        `json:"inputs_address"`
+	VoterAddress            []string        `json:"voter_address"`
+	Options                 []string        `json:"options"`
+	Time                    time.Time       `json:"time"`
+	Data                    string          `json:"data"`
+	RawLog                  string          `json:"raw_log"`
+	Memo                    string          `json:"memo"`
+	GasWanted               string          `json:"gas_wanted"`
+	GasUsed                 string          `json:"gas_used"`
+	Message                 json.RawMessage `json:"message"`
+	Sign                    json.RawMessage `json:"signatures"`
 }
 
 type MultiSendMsg struct {

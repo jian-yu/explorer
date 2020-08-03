@@ -97,6 +97,10 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 			txTime, _ := jsonObj.Get("txs").GetIndex(i).Get("timestamp").String()
 			rawLog, _ := jsonObj.Get("txs").GetIndex(i).Get("raw_log").String()
 			feeArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("fee").Get("amount").Array()
+			gasWanted, _ := jsonObj.Get("txs").GetIndex(i).Get("gas_wanted").String()
+			gasUsed, _ := jsonObj.Get("txs").GetIndex(i).Get("gas_used").String()
+			msg, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").Encode()
+			sign, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("signatures").Encode()
 			var fee float64
 			var memo string
 			// get fee
@@ -116,9 +120,10 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 			pluse := len(msgArray)
 			var realAmount, withDrawRewardAmout, withDrawCommissionAmout []float64
 			var delegatorList, validatorList, fromAddress, toAddress, outputsAddress, inputsAddress, voterAddress, options []string
+			var msgRawType string
 			for index := 0; index < len(msgArray); index++ {
-				msgType, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("type").String()
-				switch msgType {
+				msgRawType, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("type").String()
+				switch msgRawType {
 				case "cosmos-sdk/MsgSend":
 					// get amount,from address
 					msgsType = "send"
@@ -322,7 +327,7 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 				case "cosmos-sdk/MsgUnjail":
 					msgsType = "unjail"
 				default:
-					msgsType = msgType
+					msgsType = msgRawType
 				}
 				memo, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("memo").String()
 			}
@@ -343,16 +348,19 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 				txData = v.(string)
 			}
 
+			t, _ := time.ParseInLocation(time.RFC3339Nano, txTime,time.Local)
+
 			txsInfo.Height, _ = strconv.Atoi(height)
 			txsInfo.TxHash = hash
 			txsInfo.Result = status
+			txsInfo.RawType = msgRawType
 			txsInfo.Page = 0
 			txsInfo.Amount = realAmount
 			txsInfo.Plus = pluse
 			txsInfo.Fee = fee
 			txsInfo.Type = msgsType
 			txsInfo.Time = time.Now()
-			txsInfo.TxTime = txTime //string to time
+			txsInfo.TxTime = t.Unix() //string to time
 			txsInfo.ValidatorAddress = validatorList
 			txsInfo.DelegatorAddress = delegatorList
 			txsInfo.WithDrawCommissionAmout = withDrawCommissionAmout
@@ -366,6 +374,10 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 			txsInfo.RawLog = rawLog
 			txsInfo.Memo = memo
 			txsInfo.Data = txData
+			txsInfo.GasWanted = gasWanted
+			txsInfo.GasUsed = gasUsed
+			txsInfo.Message = msg
+			txsInfo.Sign = sign
 			a.Transaction.SetInfo(txsInfo)
 		}
 	}

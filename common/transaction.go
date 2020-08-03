@@ -181,3 +181,50 @@ func (t *transaction) GetTxHeight(tx model.Txs) int {
 	_ = conn.C("Txs").Find(nil).Sort("-height").One(&tx)
 	return tx.Height
 }
+
+func (t *transaction) GetTxs(before, after, limit int) ([]*model.Txs, int) {
+	var TxsSet = make([]*model.Txs, limit)
+
+	conn := t.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	switch {
+	case before > 0:
+		_ = conn.C("Txs").Find(nil).Sort("-height").Limit(before).All(&TxsSet)
+		if len(TxsSet) > limit {
+			TxsSet = TxsSet[:limit]
+		}
+	case after >= 0:
+		_ = conn.C("Txs").Find(nil).Sort("-height").Skip(after).Limit(limit).All(&TxsSet)
+	default:
+		_ = conn.C("Txs").Find(nil).Sort("-height").Limit(limit).All(&TxsSet)
+	}
+	totalTxsCount, _ := conn.C("Txs").Find(nil).Count()
+
+	return TxsSet, totalTxsCount
+}
+
+func (t *transaction) GetTxsByTypeAndTime(typo string, startTime int64, endTime int64, before, after, limit int) ([]*model.Txs, int) {
+	var TxsSet = make([]*model.Txs, limit)
+	var total = 0
+
+	conn := t.MgoOperator.GetDBConn()
+	defer conn.Session.Close()
+
+	query := bson.M{"type": typo, "txtime": bson.M{"$in": []int64{startTime, endTime}}}
+
+	switch {
+	case before > 0:
+		_ = conn.C("Txs").Find(query).Sort("-height").Limit(before).All(&TxsSet)
+		if len(TxsSet) > limit {
+			TxsSet = TxsSet[:limit]
+		}
+	case after >= 0:
+		_ = conn.C("Txs").Find(query).Sort("-height").Skip(after).Limit(limit).All(&TxsSet)
+	default:
+		_ = conn.C("Txs").Find(query).Sort("-height").Limit(limit).All(&TxsSet)
+	}
+	total, _ = conn.C("Txs").Find(query).Sort("-height").Count()
+
+	return TxsSet, total
+}

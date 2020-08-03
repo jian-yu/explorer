@@ -26,7 +26,9 @@ type Block interface {
 	SetBlock(b *model.BlockInfo)
 	GetAimHeightAndBlockHeight() (int, int)
 	GetBlockListIfHasTx(height int) []model.BlocksHeights
-	GetLastBlockHeight()int
+	GetLastBlockHeight() int
+	GetLatestBlock() model.BlockInfo
+	GetBlocks(before, after, limit int) []*model.BlockInfo
 }
 
 type Custom interface {
@@ -47,6 +49,8 @@ type Transaction interface {
 	GetDelegatorRewardTx(address string) []*model.Txs
 	GetSpecifiedHeight(head int, page int, size int) ([]*model.Txs, int)
 	GetTxHeight(tx model.Txs) int
+	GetTxs(before, after, limit int) ([]*model.Txs, int)
+	GetTxsByTypeAndTime(typo string, startTime int64, endTime int64, before, after, limit int) ([]*model.Txs, int)
 }
 
 type Proposer interface {

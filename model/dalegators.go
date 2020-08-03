@@ -45,12 +45,9 @@ type DelegatorExtra struct {
 		DelegatorAddress string `json:"delegator_address"`
 		ValidatorAddress string `json:"validator_address"`
 		Shares           string `json:"shares"`
-		Balance          struct {
-			Denom  string `json:"denom"`
-			Amount string `json:"amount"`
-		} `json:"balance"`
-		Reward string `json:"reward"`
-		Name   string `json:"name"`
+		Balance          string `json:"balance"`
+		Reward           string `json:"reward"`
+		Name             string `json:"name"`
 	} `json:"result"`
 }
 

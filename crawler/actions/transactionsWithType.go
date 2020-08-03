@@ -58,11 +58,11 @@ const (
 //	"cosmos-sdk/MsgDeposit":                     msgDepositHandle,
 //}
 
-var ChainName = ""
+//var ChainName = ""
 
 func (a *action) GetTxs() {
 
-	ChainName = a.ChainName
+	//ChainName = a.ChainName
 	//get the transaction judge whether it is stored in the database
 	for {
 		a.getTxs(a.LcdURL+SendURL, a.ChainName, "send")
@@ -237,7 +237,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 		}
 		var txsInfo model.Txs
 		jsonObj, err := simplejson.NewJson(rsp.Body())
-		if err != nil  || jsonObj == nil{
+		if err != nil || jsonObj == nil {
 			logger.Err(err).Interface(`rsp`, rsp).Interface(`url`, url).Msg(`getTxs`)
 			break
 		}
@@ -251,7 +251,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 		lenTxs := len(jsonTxs)
 
 		if lenTxs == 0 {
-			logger.Warn().Interface(`url`, url).Str(`txs`,`txs len == 0`).Msg(`getTxs`)
+			logger.Warn().Interface(`url`, url).Str(`txs`, `txs len == 0`).Msg(`getTxs`)
 			break
 		}
 
@@ -260,7 +260,6 @@ func (a *action) getTxs(url string, chainName string, types string) {
 			logger.Warn().Interface(`url`, url).Interface(`errStr`, jsonErr).Msg(`getTxs`)
 			break
 		}
-
 
 		for i := 0; i < lenTxs; i++ {
 			hash, _ := jsonObj.Get("txs").GetIndex(i).Get("txhash").String()
@@ -271,6 +270,10 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				txTime, _ := jsonObj.Get("txs").GetIndex(i).Get("timestamp").String()
 				feeArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("fee").Get("amount").Array()
 				rawLog, _ := jsonObj.Get("txs").GetIndex(i).Get("raw_log").String()
+				gasWanted, _ := jsonObj.Get("txs").GetIndex(i).Get("gas_wanted").String()
+				gasUsed, _ := jsonObj.Get("txs").GetIndex(i).Get("gas_used").String()
+				msg, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").Encode()
+				sign, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("signatures").Encode()
 				var fee float64
 				// get fee
 
@@ -290,9 +293,10 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				msgArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").Array()
 				var realAmount, withDrawRewardAmout, withDrawCommissionAmout []float64
 				var delegatorList, validatorList, fromAddress, toAddress, outputsAddress, inputsAddress, voterAddress, options []string
+				var msgRawType string
 				for index := 0; index < len(msgArray); index++ {
-					msgType, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("type").String()
-					switch msgType {
+					msgRawType, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("type").String()
+					switch msgRawType {
 					case "cosmos-sdk/MsgSend":
 						// get amount,from address
 						from, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("value").Get("from_address").String()
@@ -477,9 +481,11 @@ func (a *action) getTxs(url string, chainName string, types string) {
 					}
 
 				}
+				t, _ := time.ParseInLocation(time.RFC3339Nano, txTime, time.Local)
 
 				txsInfo.Height, _ = strconv.Atoi(height)
 				txsInfo.TxHash = hash
+				txsInfo.RawType = msgRawType
 				txsInfo.Result = status
 				txsInfo.Page = page
 				txsInfo.Amount = realAmount
@@ -487,7 +493,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				txsInfo.Fee = fee
 				txsInfo.Type = types
 				txsInfo.Time = time.Now()
-				txsInfo.TxTime = txTime //string to time
+				txsInfo.TxTime = t.Unix() //string to time
 				txsInfo.ValidatorAddress = validatorList
 				txsInfo.DelegatorAddress = delegatorList
 				txsInfo.WithDrawCommissionAmout = withDrawCommissionAmout
@@ -499,6 +505,10 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				txsInfo.VoterAddress = voterAddress
 				txsInfo.Options = options
 				txsInfo.RawLog = rawLog
+				txsInfo.GasWanted = gasWanted
+				txsInfo.GasUsed = gasUsed
+				txsInfo.Message = msg
+				txsInfo.Sign = sign
 				a.Transaction.SetInfo(txsInfo)
 				//fmt.Println(fromAddress)
 				//fmt.Println(toAddress)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"strings"
 )
 
 type ValidatorHandler struct {
@@ -172,4 +173,57 @@ func (v *ValidatorHandler) StakeValidators() []*StakeValidator {
 		stakeValidators = append(stakeValidators, stakeVal)
 	}
 	return stakeValidators
+}
+
+func (v *ValidatorHandler) ValidatorByAddress(address string) *StakeValidator {
+	switch {
+	case strings.HasPrefix(address, v.base.Bech32PrefixValAddr):
+		return v.validatorByValAddr(address)
+	case strings.HasPrefix(address, v.base.Bech32PrefixAccAddr):
+		return v.validatorByAccAddr(address)
+	case len(address) == 80:
+		return v.validatorByConPubKey(address)
+	default:
+		return v.validatorByMoniker(address)
+	}
+}
+
+func (v *ValidatorHandler) validatorByValAddr(address string) *StakeValidator {
+	stakeVals := v.StakeValidators()
+	for _, val := range stakeVals {
+		if address == val.Validator.Result[0].OperatorAddress {
+			return val
+		}
+	}
+	return nil
+}
+
+func (v *ValidatorHandler) validatorByAccAddr(address string) *StakeValidator {
+	stakeVals := v.StakeValidators()
+	for _, val := range stakeVals {
+		if address == val.Owner {
+			return val
+		}
+	}
+	return nil
+}
+
+func (v *ValidatorHandler) validatorByMoniker(moniker string) *StakeValidator {
+	stakeVals := v.StakeValidators()
+	for _, val := range stakeVals {
+		if moniker == val.Validator.Result[0].Description.Moniker {
+			return val
+		}
+	}
+	return nil
+}
+
+func (v *ValidatorHandler) validatorByConPubKey(address string) *StakeValidator {
+	stakeVals := v.StakeValidators()
+	for _, val := range stakeVals {
+		if address == val.Validator.Result[0].ConsensusPubkey {
+			return val
+		}
+	}
+	return nil
 }

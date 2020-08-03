@@ -25,7 +25,7 @@ type ValidatorToken struct {
 	Extra     *model.ExtraValidatorInfo
 }
 
-func NewTokenHandler(base *BaseHandler) *TokensHandler {
+func NewTokensHandler(base *BaseHandler) *TokensHandler {
 	return &TokensHandler{base: base}
 }
 
@@ -56,7 +56,8 @@ func (t *TokensHandler) GetTotalDelegateAmount(address string) []decimal.Decimal
 	infos := t.base.Account.GetDelegator(address)
 	//infos := delegators.GetInfo(address)
 	for _, item := range infos.Result {
-		decimalAmount, _ := decimal.NewFromString(item.Balance.Amount)
+		decimalAmount, _ := decimal.NewFromString(item.Balance)
+		//decimalAmount, _ := decimal.NewFromString(item.Balance.Amount)
 		amount = amount.Add(decimalAmount)
 	}
 	delegate = append(delegate, amount)
