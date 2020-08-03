@@ -270,6 +270,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				status, _ := jsonObj.Get("txs").GetIndex(i).Get("logs").GetIndex(0).Get("success").Bool()
 				txTime, _ := jsonObj.Get("txs").GetIndex(i).Get("timestamp").String()
 				feeArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("fee").Get("amount").Array()
+				rawLog, _ := jsonObj.Get("txs").GetIndex(i).Get("raw_log").String()
 				var fee float64
 				// get fee
 
@@ -497,6 +498,7 @@ func (a *action) getTxs(url string, chainName string, types string) {
 				txsInfo.InputsAddress = inputsAddress
 				txsInfo.VoterAddress = voterAddress
 				txsInfo.Options = options
+				txsInfo.RawLog = rawLog
 				a.Transaction.SetInfo(txsInfo)
 				//fmt.Println(fromAddress)
 				//fmt.Println(toAddress)

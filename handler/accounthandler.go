@@ -66,15 +66,24 @@ func (a *AccountHandler) AccountTokenInfo(address string) Tokens {
 
 	decimalTotalAmount := reward[0].Add(avail[0].Add(com[0].Add(unbind[0])))
 
+	tokens.Available = append(tokens.Available, avail[0])
 	percentage := avail[0].Div(decimalTotalAmount)
 	tokens.Available = append(tokens.Available, percentage)
+
+	tokens.Commission = append(tokens.Commission, com[0])
 	percentage = com[0].Div(decimalTotalAmount)
 	tokens.Commission = append(tokens.Commission, percentage)
+
+	tokens.Unbonding = append(tokens.Unbonding, unbind[0])
 	percentage = unbind[0].Div(decimalTotalAmount)
 	tokens.Unbonding = append(tokens.Unbonding, percentage)
+
+	tokens.Delegated = append(tokens.Delegated, delegate[0])
 	percentage = delegate[0].Div(decimalTotalAmount)
 	tokens.Delegated = append(tokens.Delegated, percentage)
 	percentage = reward[0].Div(decimalTotalAmount)
+
+	tokens.TotalAmount = append(tokens.TotalAmount, decimalTotalAmount)
 
 	return tokens
 }

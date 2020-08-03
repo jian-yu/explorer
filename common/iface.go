@@ -16,7 +16,7 @@ type Validator interface {
 	GetOne(address string) *model.ValidatorInfo
 	GetValidatorRank(amount float64, jailed bool) int
 	SetValidatorSet(vs model.ValidatorSet)
-	GetValidatorSet(limit int) *[]model.ValidatorSet
+	GetValidatorSet(limit int) []*model.ValidatorSet
 	SetValidatorToDelegatorAddr(v2d model.ValidatorToDelegatorAddress)
 	Check(address string) (int, string)
 	CheckDelegatorAddress(address string) (string, string)
@@ -42,9 +42,9 @@ type Transaction interface {
 	CheckHash(txHash string) int
 	GetValidatorsTransactions(address string)
 	GetPowerEventInfo(address string, page, size int) (*[]model.Txs, int)
-	GetDelegatorTxs(address string, page, size int) (*[]model.Txs, int)
+	GetDelegatorTxs(address string, page, size int) ([]*model.Txs, int)
 	GetDelegatorCommissionTx(address string) *[]model.Txs
-	GetDelegatorRewardTx(address string) *[]model.Txs
+	GetDelegatorRewardTx(address string) []*model.Txs
 	GetSpecifiedHeight(head int, page int, size int) ([]*model.Txs, int)
 	GetTxHeight(tx model.Txs) int
 }

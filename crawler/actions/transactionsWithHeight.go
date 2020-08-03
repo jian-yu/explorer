@@ -1,8 +1,10 @@
 package actions
 
 import (
+	"encoding/json"
 	"errors"
 	"explorer/model"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -93,8 +95,10 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 			height, _ := jsonObj.Get("txs").GetIndex(i).Get("height").String()
 			status, _ := jsonObj.Get("txs").GetIndex(i).Get("logs").GetIndex(0).Get("success").Bool()
 			txTime, _ := jsonObj.Get("txs").GetIndex(i).Get("timestamp").String()
+			rawLog, _ := jsonObj.Get("txs").GetIndex(i).Get("raw_log").String()
 			feeArray, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("fee").Get("amount").Array()
 			var fee float64
+			var memo string
 			// get fee
 			for index := 0; index < len(feeArray); index++ {
 				demo, _ := jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("fee").Get("amount").GetIndex(index).Get("denom").String()
@@ -320,7 +324,23 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 				default:
 					msgsType = msgType
 				}
+				memo, _ = jsonObj.Get("txs").GetIndex(i).Get("tx").Get("value").Get("msg").GetIndex(index).Get("memo").String()
+			}
 
+			url := a.LcdURL + "/txs/%s"
+			rsp, err := a.Client.R().Get(fmt.Sprintf(url, hash))
+			if err != nil {
+				continue
+			}
+
+			var txHashMap map[string]interface{}
+			err = json.Unmarshal(rsp.Body(), &txHashMap)
+			if err != nil {
+				continue
+			}
+			var txData string
+			if v, ok := txHashMap["data"]; ok {
+				txData = v.(string)
 			}
 
 			txsInfo.Height, _ = strconv.Atoi(height)
@@ -343,15 +363,10 @@ func (a *action) getTxs2(height int, lcdURL string, chainName string) error {
 			txsInfo.InputsAddress = inputsAddress
 			txsInfo.VoterAddress = voterAddress
 			txsInfo.Options = options
+			txsInfo.RawLog = rawLog
+			txsInfo.Memo = memo
+			txsInfo.Data = txData
 			a.Transaction.SetInfo(txsInfo)
-			//txsInfo.SetInfo(log)
-			//obj,_ := json.Marshal(txsInfo)
-			//fmt.Println(string(obj))
-			//fmt.Println(fromAddress)
-			//fmt.Println(toAddress)
-			//fmt.Println(outputsAddress)
-			//fmt.Println(inputsAddress)
-			//fmt.Println(voterAddress,options)
 		}
 	}
 	//page++

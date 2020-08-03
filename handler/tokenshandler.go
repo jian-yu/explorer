@@ -1,6 +1,9 @@
 package handler
 
-import "github.com/shopspring/decimal"
+import (
+	"explorer/model"
+	"github.com/shopspring/decimal"
+)
 
 type TokensHandler struct {
 	base *BaseHandler
@@ -14,6 +17,12 @@ type Kinds struct {
 	Reward      []decimal.Decimal `json:"reward"`
 	Commission  []decimal.Decimal `json:"commission"`
 	TotalAmount []decimal.Decimal `json:"total_amount"`
+}
+
+type ValidatorToken struct {
+	Validator *model.ValidatorInfo
+	Owner     string
+	Extra     *model.ExtraValidatorInfo
 }
 
 func NewTokenHandler(base *BaseHandler) *TokensHandler {
@@ -87,3 +96,22 @@ func (t *TokensHandler) GetTotalCommissionAmount(address string) []decimal.Decim
 	return commission
 }
 
+func (t *TokensHandler) GetValidatorsToken() []*ValidatorToken {
+	var validatorTokens []*ValidatorToken
+
+	validators := t.base.Validator.GetInfo()
+
+	for _, val := range validators {
+		_, owner := t.base.Validator.Check(val.ValidatorAddress)
+
+		valDetail := t.base.ValidatorDetail.GetOne(val.ValidatorAddress)
+
+		valToken := &ValidatorToken{
+			Validator: val,
+			Owner:     owner,
+			Extra:     valDetail,
+		}
+		validatorTokens = append(validatorTokens, valToken)
+	}
+	return validatorTokens
+}

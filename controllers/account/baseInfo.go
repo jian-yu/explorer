@@ -95,7 +95,7 @@ func (bic *BaseInfoController) AccountInfo() {
 func (bic *BaseInfoController) Account() {
 	bic.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", bic.Ctx.Request.Header.Get("Origin"))
 
-	address := bic.Ctx.Input.Param("address")
+	address := bic.Ctx.Input.Param(":address")
 	if address == "" {
 		bic.Data["json"] = &Account{}
 		bic.ServeJSON()
@@ -111,9 +111,11 @@ func (bic *BaseInfoController) Account() {
 	locked := info.Tokens.Unbonding[0].String()
 	frozen := info.Tokens.Delegated[0].String()
 
+	pubkey, _ := json.Marshal(info.Detail.Result.Value.PublicKey)
+
 	account := &Account{
 		Address:       info.BaseInfo.Address,
-		PublicKey:     nil,
+		PublicKey:     pubkey,
 		AccountNumber: an,
 		Sequence:      seq,
 		Flags:         0,

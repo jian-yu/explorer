@@ -161,9 +161,9 @@ func (a *action) getAllPledgenTokens() decimal.Decimal {
 	return total
 }
 
-func (a *action) getUptime(vs *[]model.ValidatorSet, pbKey string) int {
+func (a *action) getUptime(vs []*model.ValidatorSet, pbKey string) int {
 	count := 0 //记录一百个块中该验证着参与的次数（通过公钥）
-	for _, Sets := range *vs {
+	for _, Sets := range vs {
 		for _, item := range Sets.Validators {
 			if item.PubKey == pbKey {
 				count++
@@ -190,7 +190,7 @@ func (a *action) setValidatorHashAddress(operaAddress string, pubkey string) {
 	}
 }
 
-func (a *action) dealWithValidatorList(item model.Result, CoinToVoitingPower float64, VS *[]model.ValidatorSet) model.ValidatorInfo {
+func (a *action) dealWithValidatorList(item model.Result, CoinToVoitingPower float64, VS []*model.ValidatorSet) model.ValidatorInfo {
 	a.MakeBaseInfo(item, VS)
 	a.setValidatorHashAddress(item.OperatorAddress, item.ConsensusPubkey)
 
@@ -544,4 +544,8 @@ func (a *action) GetValidators() {
 
 		time.Sleep(time.Second * 4)
 	}
+}
+
+func (a *action) GetGenesis() {
+	a.SetValidatorDelegatorAddress()
 }

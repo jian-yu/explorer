@@ -12,7 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (a *action) MakeBaseInfo(item model.Result, VS *[]model.ValidatorSet) {
+func (a *action) MakeBaseInfo(item model.Result, VS []*model.ValidatorSet) {
 	var baseInfo model.ExtraValidatorInfo
 	//var vaada model.ValidatorToDelegatorAddress
 
@@ -156,11 +156,11 @@ func (a *action) updateInsertDelegatorData() error {
 	return nil
 }
 
-func (a *action) getMissBlock(vs *[]model.ValidatorSet, pbKey string) []model.MissBLockData {
+func (a *action) getMissBlock(vs []*model.ValidatorSet, pbKey string) []model.MissBLockData {
 	var blockRecords []model.MissBLockData //记录一百个块中该验证着参与的次数（通过公钥）
 	var blockRecord model.MissBLockData
 OUTLOOP:
-	for _, Sets := range *vs {
+	for _, Sets := range vs {
 
 		for _, item := range Sets.Validators {
 			if item.PubKey == pbKey {

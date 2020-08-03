@@ -82,8 +82,8 @@ func (v *validator) SetValidatorSet(vs model.ValidatorSet) {
 	}
 }
 
-func (v *validator) GetValidatorSet(limit int) *[]model.ValidatorSet {
-	var ValidatorsSets []model.ValidatorSet
+func (v *validator) GetValidatorSet(limit int) []*model.ValidatorSet {
+	var ValidatorsSets []*model.ValidatorSet
 	conn := v.MgoOperator.GetDBConn()
 	defer conn.Session.Close()
 
@@ -92,7 +92,7 @@ func (v *validator) GetValidatorSet(limit int) *[]model.ValidatorSet {
 		log.Err(err).Msg(`GetValidatorSet`)
 		return nil
 	}
-	return &ValidatorsSets
+	return ValidatorsSets
 }
 
 func (v *validator) SetValidatorToDelegatorAddr(v2d model.ValidatorToDelegatorAddress) {

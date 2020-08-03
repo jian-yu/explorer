@@ -35,7 +35,7 @@ func New(m db.MgoOperator) Crawler {
 	chainName := viper.GetString(`Public.ChainName`)
 	denom := viper.GetString(`Public.Denom`)
 	coinPriceURL := viper.GetString(`Public.CoinPriceURL`)
-	genesisAddr := viper.GetString(`Public.CoinPriceURL`)
+	genesisAddr := viper.GetString(`Public.GenesisAddress`)
 	votingPower := viper.GetFloat64(`Public.CoinToVoitingPower`)
 
 	return &crawler{
@@ -65,6 +65,7 @@ func (c *crawler) Run() {
 		c.GenesisAddr,
 	)
 
+	go act.GetGenesis()
 	go act.GetPublic()
 	go act.GetBlock()
 	go act.GetValidators()

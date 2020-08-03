@@ -39,6 +39,7 @@ func init() {
 	validatorHandler := handler.NewValidatorHandler(baseHandler, delegationHandler)
 	tokensHandler := handler.NewTokenHandler(baseHandler)
 	accountHandler := handler.NewAccountHandler(baseHandler, tokensHandler)
+	transactionHandler := handler.NewTransactionHandler(baseHandler)
 
 	krc := &account.KindsRewardController{Base: baseController}
 
@@ -60,11 +61,11 @@ func init() {
 				&controllers.BlockController{Base: baseController},
 			),
 		),
-		beego.NSNamespace("/v1",
-			beego.NSInclude(
-				&controllers.TxsController{Base: baseController},
-			),
-		),
+		//beego.NSNamespace("/v1",
+		//	beego.NSInclude(
+		//		&controllers.TxsController{Base: baseController},
+		//	),
+		//),
 		beego.NSNamespace("/v1",
 			beego.NSInclude(
 				&controllers.TxDetailControllers{Base: baseController},
@@ -118,7 +119,7 @@ func init() {
 		),
 		beego.NSNamespace("/v1",
 			beego.NSInclude(
-				&account.DelegatorTxController{Base: baseController},
+				&account.DelegatorTxController{Base: baseController, TransactionHandler: transactionHandler},
 			),
 		),
 		beego.NSNamespace("/v1",
@@ -126,6 +127,9 @@ func init() {
 		),
 		beego.NSNamespace("v1",
 			beego.NSInclude(&asset.Controller{ValidatorHandler: validatorHandler}),
+		),
+		beego.NSNamespace("v1",
+			beego.NSInclude(&controllers.TokensController{TokensHandler: tokensHandler}),
 		),
 	)
 

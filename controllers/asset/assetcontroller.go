@@ -17,65 +17,8 @@ type Controller struct {
 // @Success code 0
 // @Failure code 1
 // @router /assets [get]
-func (a *Controller) Asset() {
+func (a *Controller) Assets() {
 	a.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", a.Ctx.Request.Header.Get("Origin"))
-	assetName := a.GetString("asset", "")
-	if assetName != "" {
-		a.AssetByName()
-		return
-	}
-	a.AssetPage()
-}
-
-// @Title Get
-// @Description get asset info
-// @Success code 0
-// @Failure code 1
-// @router /asset-holders [get]
-func (a *Controller) AssetHolder() {
-	a.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", a.Ctx.Request.Header.Get("Origin"))
-	assetName := a.GetString("asset", "")
-	if assetName == "" {
-		a.Data["json"] = &model.Asset{}
-		a.ServeJSON()
-		return
-	}
-	page, _ := a.GetInt("page", 0)
-	if page <= 1 {
-		page = 0
-	}
-	rows, _ := a.GetInt("rows", 1)
-	if rows <= 0 {
-		rows = 1
-	}
-
-	val := a.ValidatorHandler.ValidatorByAsset(assetName)
-	if val == nil {
-		a.Data["json"] = &model.Asset{}
-		a.ServeJSON()
-		return
-	}
-
-	delegations := a.ValidatorHandler.Delegations(val.ValidatorAddress, page, rows)
-
-	var assetHolders model.AssetHolders
-	var addrHolders []*model.AddressHolders
-	for _, item := range delegations.Delegations {
-		addrHolder := &model.AddressHolders{
-			Address:    item.Address,
-			Quantity:   item.Amount,
-			Percentage: item.AmountPercentage,
-		}
-		addrHolders = append(addrHolders, addrHolder)
-	}
-	assetHolders.TotalNum = delegations.TotalDelegations
-	assetHolders.AddressHolders = addrHolders
-
-	a.Data["json"] = assetHolders
-	a.ServeJSON()
-}
-
-func (a *Controller) AssetPage() {
 	page, _ := a.GetInt("page", 1)
 	if page <= 0 {
 		page = 1
@@ -144,6 +87,59 @@ func (a *Controller) AssetPage() {
 	a.ServeJSON()
 }
 
+// @Title Get
+// @Description get asset info
+// @Success code 0
+// @Failure code 1
+// @router /asset-holders [get]
+func (a *Controller) AssetHolder() {
+	a.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", a.Ctx.Request.Header.Get("Origin"))
+	assetName := a.GetString("asset", "")
+	if assetName == "" {
+		a.Data["json"] = &model.Asset{}
+		a.ServeJSON()
+		return
+	}
+	page, _ := a.GetInt("page", 0)
+	if page <= 1 {
+		page = 0
+	}
+	rows, _ := a.GetInt("rows", 1)
+	if rows <= 0 {
+		rows = 1
+	}
+
+	val := a.ValidatorHandler.ValidatorByAsset(assetName)
+	if val == nil {
+		a.Data["json"] = &model.Asset{}
+		a.ServeJSON()
+		return
+	}
+
+	delegations := a.ValidatorHandler.Delegations(val.ValidatorAddress, page, rows)
+
+	var assetHolders model.AssetHolders
+	var addrHolders []*model.AddressHolders
+	for _, item := range delegations.Delegations {
+		addrHolder := &model.AddressHolders{
+			Address:    item.Address,
+			Quantity:   item.Amount,
+			Percentage: item.AmountPercentage,
+		}
+		addrHolders = append(addrHolders, addrHolder)
+	}
+	assetHolders.TotalNum = delegations.TotalDelegations
+	assetHolders.AddressHolders = addrHolders
+
+	a.Data["json"] = assetHolders
+	a.ServeJSON()
+}
+
+// @Title Get
+// @Description get asset info
+// @Success code 0
+// @Failure code 1
+// @router /asset [get]
 func (a *Controller) AssetByName() {
 	assetName := a.GetString("asset", "")
 	if assetName == "" {

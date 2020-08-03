@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"explorer/model"
+	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type ValidatorHandler struct {
@@ -13,6 +17,26 @@ type ValidatorTypeList struct {
 	Jailed    []*model.ValidatorInfo `json:"jailed"`
 	Active    []*model.ValidatorInfo `json:"active"`
 	Candidate []*model.ValidatorInfo `json:"candidate"`
+}
+
+type ValidatorSet struct {
+	Height string `json:"height"`
+	Result struct {
+		BlockHeight string `json:"block_height"`
+		Validators  []struct {
+			Address          string `json:"address"`
+			PubKey           string `json:"pub_key"`
+			ProposerPriority string `json:"proposer_priority"`
+			VotingPower      string `json:"voting_power"`
+		} `json:"validators"`
+	} `json:"result"`
+}
+
+type StakeValidator struct {
+	Validator        model.Validators
+	Owner            string
+	Power            string
+	ProposerPriority string
 }
 
 func NewValidatorHandler(
@@ -107,4 +131,45 @@ func (v *ValidatorHandler) ValidatorByAsset(asset string) *model.ValidatorInfo {
 
 func (v *ValidatorHandler) Delegations(address string, page int, size int) *DelegationMsg {
 	return v.delegation.ValidatorDelegations(address, page, size)
+}
+
+func (v *ValidatorHandler) StakeValidators() []*StakeValidator {
+	var stakeValidators []*StakeValidator
+
+	cli := resty.New()
+	url := v.base.LcdURL + "/validatorsets/latest"
+	resp, err := cli.R().Get(url)
+	if err != nil {
+		log.Err(err).Interface(`url`, url).Msg("StakeValidators")
+		return stakeValidators
+	}
+
+	var validatorSet ValidatorSet
+	err = json.Unmarshal(resp.Body(), &validatorSet)
+	if err != nil {
+		return stakeValidators
+	}
+
+	for i, val := range validatorSet.Result.Validators {
+		resp, err := cli.R().Get(v.base.LcdURL + fmt.Sprintf("/staking/validators?page=%d&limit=1", i+1))
+		if err != nil {
+			continue
+		}
+
+		var stakingVal model.Validators
+		err = json.Unmarshal(resp.Body(), &stakingVal)
+		if err != nil {
+			continue
+		}
+
+		_, owner := v.base.Validator.Check(val.Address)
+		stakeVal := &StakeValidator{
+			Validator:        stakingVal,
+			Owner:            owner,
+			Power:            val.VotingPower,
+			ProposerPriority: val.ProposerPriority,
+		}
+		stakeValidators = append(stakeValidators, stakeVal)
+	}
+	return stakeValidators
 }

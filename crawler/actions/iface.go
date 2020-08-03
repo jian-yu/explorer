@@ -9,4 +9,5 @@ type Action interface {
 	GetDelegatorNums()
 	GetTxs()
 	GetTxs2()
+	GetGenesis()
 }

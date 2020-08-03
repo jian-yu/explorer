@@ -107,8 +107,8 @@ func (t *transaction) GetPowerEventInfo(address string, page, size int) (*[]mode
 	return &txsSet, count
 }
 
-func (t *transaction) GetDelegatorTxs(address string, page, size int) (*[]model.Txs, int) {
-	var txsSet []model.Txs
+func (t *transaction) GetDelegatorTxs(address string, page, size int) ([]*model.Txs, int) {
+	var txsSet []*model.Txs
 	if page < 0 {
 		// default page
 		page = 0
@@ -131,7 +131,7 @@ func (t *transaction) GetDelegatorTxs(address string, page, size int) (*[]model.
 	count, _ := conn.C("Txs").Find(bson.M{"$or": query}).Count()
 	_ = conn.C("Txs").Find(bson.M{"$or": query}).Sort("-height").Limit(size).Skip(page * size).All(&txsSet)
 
-	return &txsSet, count
+	return txsSet, count
 }
 func (t *transaction) GetDelegatorCommissionTx(address string) *[]model.Txs {
 	var txsSet []model.Txs
@@ -142,8 +142,8 @@ func (t *transaction) GetDelegatorCommissionTx(address string) *[]model.Txs {
 	_ = conn.C("Txs").Find(bson.M{"type": "commission", "delegatoraddress": bson.M{"$elemMatch": bson.M{"$eq": address}}}).All(&txsSet)
 	return &txsSet
 }
-func (t *transaction) GetDelegatorRewardTx(address string) *[]model.Txs {
-	var txsSet []model.Txs
+func (t *transaction) GetDelegatorRewardTx(address string) []*model.Txs {
+	var txsSet []*model.Txs
 	var query []bson.M
 
 	conn := t.MgoOperator.GetDBConn()
@@ -153,7 +153,7 @@ func (t *transaction) GetDelegatorRewardTx(address string) *[]model.Txs {
 	q2 := bson.M{"type": "reward"}
 	query = append(query, q1, q2)
 	_ = conn.C("Txs").Find(bson.M{"$or": query, "delegatoraddress": bson.M{"$elemMatch": bson.M{"$eq": address}}}).All(&txsSet)
-	return &txsSet
+	return txsSet
 }
 func (t *transaction) GetSpecifiedHeight(head int, page int, size int) ([]*model.Txs, int) {
 	var TxsSet = make([]*model.Txs, size)

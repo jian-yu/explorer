@@ -26,6 +26,9 @@ type Txs struct {
 	VoterAddress            []string  `json:"voter_address"`
 	Options                 []string  `json:"options"`
 	Time                    time.Time `json:"time"`
+	Data                    string    `json:"data"`
+	RawLog                  string    `json:"raw_log"`
+	Memo                    string    `json:"memo"`
 }
 
 type MultiSendMsg struct {
@@ -109,4 +112,3 @@ type Gas struct {
 	Used   string `json:"used"`
 	Wanted string `json:"wanted"`
 }
-
